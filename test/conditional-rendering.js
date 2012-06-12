@@ -1,0 +1,3 @@
+describe("Bacbone.Templates", function() {
+	
+});
