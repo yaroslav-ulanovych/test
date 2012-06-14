@@ -12,9 +12,16 @@
 
 <script type="text/javascript">
 $(function() {
-	var person1 = new Backbone.Model({name: "John", sex: "male", age: 41});
-	var person2 = new Backbone.Model({name: "Mary", sex: "female", age: 27});
-	var person3 = new Backbone.Model({name: "Bob", sex: "male", age: 20});
+	var PersonModel = Backbone.Model.extend({
+		initialize : function() {
+			this.on("change", function() {
+				console.log("change", arguments);
+			});
+		}
+	});
+	var person1 = new PersonModel({name: "John", sex: "male", age: 41});
+	var person2 = new PersonModel({name: "Mary", sex: "female", age: 27});
+	var person3 = new PersonModel({name: "Bob", sex: "male", age: 20});
 	var data = new Backbone.Model({
 		persons: new Backbone.Collection([person1, person2, person3])
 	});
@@ -29,7 +36,8 @@ $(function() {
 <table>
 	<thead><th>Name</th><th>Sex</th><th>Age</th></thead>
 	<tbody data="persons">
-		<tr hovered=">howered" class="?hovered hovered">
+		<tr hovered="hovered" class="hovered ? hovered : not">
+			<div></div>
 			<td>$name</td>
 			<td>$sex</td>
 			<td>$age</td>

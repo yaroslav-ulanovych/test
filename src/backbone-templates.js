@@ -10,8 +10,6 @@ Backbone.Templates = {
 		
 			
 			
-			log(template, data);
-		
 			// if the template consists of several nodes in a sequence,
 			// then bind each node separately to the same data
 			if (template.length > 1) {
@@ -31,6 +29,35 @@ Backbone.Templates = {
 				
 			} else if (data instanceof Backbone.Model) {
 				var model = data;
+				
+				// substitute attributes
+				_(template[0].attributes).each(function(attr) {
+					log("attr", attr.name, attr.value);
+					if (attr.value[0] == "$") {
+						var variable = attr.value.substring(1);
+						model.on("change:" + variable, _(function() {
+							template.attr(attr.name, model.get(variable));
+						}).tap(function(f)	{f.call()}));
+					} else if (attr.value.indexOf("?") != -1) {
+						var parsed = /(.*?|)(\w+)(\s*\?\s*)(\w+)(\s*\:\s*)(\w+)(.*)/.exec(attr.value)
+						if (parsed) {
+							var beginning = parsed[1];
+							var variable = parsed[2];
+							var arg1 = parsed[4];
+							var arg2 = parsed[6];
+							var ending = parsed[7];
+							model.on("change:" + variable, _(function() {
+								template.attr(attr.name, beginning + (model.get(variable) ? arg1 : arg2) + ending);
+							}).tap(function(f)	{f.call()}));
+						}
+					} else if (attr.name == "hovered") {
+						log("attr bound")
+						model.set(attr.value, false);
+						template.mouseover(function() {model.set(attr.value, true);});
+						template.mouseout(function() {model.set(attr.value, false);});
+					}
+				});
+				
 				if (template.children().length == 0) {
 					// substitute content
 					var text = template.text();
@@ -41,25 +68,6 @@ Backbone.Templates = {
 							template.text(model.get(variable));
 						}).tap(function(f){f.call()}));
 					}
-					// substitute attributes
-					_(template[0].attributes).each(function(attr) {
-						if (attr.value[0] == "$") {
-							var variable = attr.value.substring(1);
-							model.on("change:" + variable, _(function() {
-								template.attr(attr.name, model.get(variable));
-							}).tap(function(f)	{f.call()}));
-						} if (attr.value[0] == "?") {
-							var regex = /\?(\w+)(\s+)(\w+)(\s+)(.+)/;
-							var parsed = regex.exec(attr.value);
-							var variable = parsed[1];
-							var arg = parsed[3];
-							
-						} else if (attr.name == "hovered") {
-							model.set(attr.value, false);
-							template.mouseover(function() {model.set(attr.value, true);});
-							template.mouseout(function() {model.set(attr.value, false);});
-						}
-					});
 					return template;
 				} else {
 					// recursively bind all descendant nodes to the same data
