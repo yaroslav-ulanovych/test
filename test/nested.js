@@ -11,7 +11,7 @@ describe("Bacbone.Templates", function() {
 		});
 		
 		it("collections", function() {
-			var template = $("<div><ul data='cars'><li>$color</li></ul></div>");
+			var template = $("<div data='cars'><ul data='models'><li>$color</li></ul></div>");
 			var model = backbonize({cars : [{color: "red"}, {color: "green"}]});
 			Backbone.Templates.bind(template, model);
 			expect(template.find("ul > li:nth-child(1)").text()).toBe("red");
