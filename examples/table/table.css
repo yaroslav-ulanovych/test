@@ -10,3 +10,17 @@ table td {
 .hovered {
 	background-color : red;
 }
+
+tbody > tr > td:nth-child(1) {
+	position : relative;
+}
+
+tbody > tr > td:nth-child(1) > div {
+	background-color : yellow;
+	position : absolute;
+	left : 10px;
+}
+
+.hide {
+	display: none;
+}

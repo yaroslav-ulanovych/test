@@ -15,16 +15,14 @@ $(function() {
 	var PersonModel = Backbone.Model.extend({
 		initialize : function() {
 			this.on("change", function() {
-				console.log("change", arguments);
+				//console.log("change", arguments);
 			});
 		}
 	});
 	var person1 = new PersonModel({name: "John", sex: "male", age: 41});
 	var person2 = new PersonModel({name: "Mary", sex: "female", age: 27});
 	var person3 = new PersonModel({name: "Bob", sex: "male", age: 20});
-	var data = new Backbone.Model({
-		persons: new Backbone.Collection([person1, person2, person3])
-	});
+	var data = new Backbone.Collection([person1, person2, person3]);
 	Backbone.Templates.bind($("body"), data, {debug: true});
 });
 </script>
@@ -36,8 +34,11 @@ $(function() {
 <table>
 	<thead><th>Name</th><th>Sex</th><th>Age</th></thead>
 	<tbody data="models">
-		<tr>
-			<td>$name</td>
+		<tr hovered="hovered" class="hovered ? hovered : not">
+			<td>
+				<div rendered="hovered" hovered="hovered">popup</div>
+				<span>$name</span>
+			</td>
 			<td>$sex</td>
 			<td>$age</td>
 		</tr>

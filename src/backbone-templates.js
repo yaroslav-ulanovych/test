@@ -1,5 +1,38 @@
 (function() {
 
+	var attrNames = {
+		data : "data",
+		hovered : "hovered",
+		rendered : "rendered"
+	};
+	
+	var attrHandlers = {};
+	attrHandlers[attrNames.hovered] = function(template, model, attrValue) {
+		model.set(attrValue, false);
+		template.mouseover(function() {
+			console.log("mouseover", template);
+			model.set(attrValue, true);
+		});
+		template.mouseout(function() {
+			console.log("mouseout", template);
+			model.set(attrValue, false);
+		});
+	};
+	
+	attrHandlers[attrNames.rendered] = function(template, model, attrValue) {
+		var next = template.next();
+		if (next.length == 0) throw "no next";
+		model.bind("change:" + attrValue, _.tap(function() {
+			if (model.get(attrValue)) {
+				console.log("insertBefore", next, template);
+				next.before(template);
+			} else {
+				console.log("detach", template);
+				template.detach();
+			}
+		}, function(fn) {fn()}));
+	};
+
 	Backbone.Templates = {
 
 		bind : (function() {
@@ -24,39 +57,37 @@
 				// then bind each node separately to the same data
 				if (template.length > 1) {
 					template.each(function(index, item) {
+						
 						recursively($(item), data);
 					});
+					return;
 				}
-				
 				log("processing " + template[0].tagName.toLowerCase());
 				
-				var dataAttr = "data";
+				// real work starts
 				
 				// change context
-				var dataAttrValue = template.attr(dataAttr);
+				var dataAttrValue = template.attr(attrNames.data);
 				dataAttrValue && (dataAttrValue != "models") && (!(data instanceof Backbone.Collection)) && (data = data.get(dataAttrValue));
 				
+				// render collection
 				if (data instanceof Backbone.Collection) {
 					var collection = data;
 					if (dataAttrValue == "models") {
 						collection.each(function(model) {
-							var res = recursively(this.clone(), model);
-							template.append(res);
+							var x = this.clone();
+							recursively(x, model);
+							template.append(x);
 						}, template.children().detach());
-					} else {
-						// recursively bind all descendant nodes to the same data
-						template.children().each(function(index, node) {
-							recursively($(node), data);
-						});
-						return template;
+					} else if (template.children().length != 0) {
+						recursively(template.children(), data);
 					}
-					
-				} else if (data instanceof Backbone.Model) {
+				}	
+				// render model
+				else if (data instanceof Backbone.Model) {
 					var model = data;
-					
 					// substitute attributes
 					_(template[0].attributes).each(function(attr) {
-						log("attr", attr.name, attr.value);
 						if (attr.value[0] == "$") {
 							var variable = attr.value.substring(1);
 							model.on("change:" + variable, _(function() {
@@ -74,11 +105,10 @@
 									template.attr(attr.name, beginning + (model.get(variable) ? arg1 : arg2) + ending);
 								}).tap(function(f)	{f.call()}));
 							}
-						} else if (attr.name == "hovered") {
-							log("attr bound")
-							model.set(attr.value, false);
-							template.mouseover(function() {model.set(attr.value, true);});
-							template.mouseout(function() {model.set(attr.value, false);});
+						// handling of special attributes
+						} else {
+							var handler = attrHandlers[attr.name];
+							if (handler) handler(template, model, attr.value);
 						}
 					});
 					
@@ -86,19 +116,13 @@
 						// substitute content
 						var text = template.text();
 						if (text[0] == "$") {
-							log("bound");
 							var variable = text.substring(1);
 							model.on("change:" + variable, _(function() {
 								template.text(model.get(variable));
 							}).tap(function(f){f.call()}));
 						}
-						return template;
 					} else {
-						// recursively bind all descendant nodes to the same data
-						template.children().each(function(index, node) {
-							recursively($(node), data);
-						});
-						return template;
+						recursively(template.children(), data);
 					}
 				} else {
 					throw "model/collection required";
