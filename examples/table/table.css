@@ -1,11 +1,4 @@
 
-table {
-	border-collapse: collapse;
-}
-
-table td {
-	border: 1px solid;
-}
 
 .hovered {
 	background-color : red;
@@ -19,8 +12,10 @@ tbody > tr > td:nth-child(1) > div {
 	background-color : yellow;
 	position : absolute;
 	left : 10px;
+	z-index : 1;
 }
 
-.hide {
-	display: none;
+.popup-menu {
+	height: 30px;
+	width: 60px;
 }
