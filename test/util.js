@@ -18,3 +18,22 @@ function backbonize(obj) {
 		return obj;
 	}
 }
+
+jasmine.Matchers.prototype.toBeHtml = function() {
+	
+	var actual = this.actual;
+	var expected = $(arguments[0]);
+	
+	function compare(pre, actual, expected) {
+		//if (_.isUndefined(actual) && _.isUndefined(expected))
+	};
+	
+	
+
+
+	this.message = function() {
+		return "hello";
+	};
+	return false;
+	
+}

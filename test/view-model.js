@@ -1,0 +1,3 @@
+describe("Bacbone.ViewModel", function() {
+
+});

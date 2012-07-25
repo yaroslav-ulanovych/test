@@ -21,16 +21,25 @@
 	
 	attrHandlers[attrNames.rendered] = function(template, model, attrValue) {
 		var next = template.next();
-		if (next.length == 0) throw "no next";
-		model.bind("change:" + attrValue, _.tap(function() {
-			if (model.get(attrValue)) {
-				console.log("insertBefore", next, template);
-				next.before(template);
-			} else {
-				console.log("detach", template);
-				template.detach();
-			}
-		}, function(fn) {fn()}));
+		var parent = template.parent();
+		var prev = template.prev();
+		if (prev.length === 0) {
+			model.bind("change:" + attrValue, _.tap(function() {
+				if (model.get(attrValue)) {
+					parent.prepend(template);
+				} else {
+					template.detach();
+				}
+			}, function(fn) {fn()}));
+		} else if (next.length === 0) {
+			model.bind("change:" + attrValue, _.tap(function() {
+				if (model.get(attrValue)) {
+					parent.append(template);
+				} else {
+					template.detach();
+				}
+			}, function(fn) {fn()}));
+		}
 	};
 
 	Backbone.Templates = {
@@ -39,6 +48,10 @@
 		
 			// real bind function
 			function bind(template, data, state) {
+			
+				if (data instanceof Backbone.Collection) {
+					data = new Backbone.CollectionModel({}, {collection : data});
+				}
 						
 				var recursively = function(template, data) {
 					var stateCopy = _.clone(state);
@@ -57,7 +70,6 @@
 				// then bind each node separately to the same data
 				if (template.length > 1) {
 					template.each(function(index, item) {
-						
 						recursively($(item), data);
 					});
 					return;
@@ -68,20 +80,29 @@
 				
 				// change context
 				var dataAttrValue = template.attr(attrNames.data);
-				dataAttrValue && (dataAttrValue != "models") && (!(data instanceof Backbone.Collection)) && (data = data.get(dataAttrValue));
+				if (dataAttrValue) {
+					var newData = data.get(dataAttrValue);
+					
+					if (!(newData instanceof Backbone.Model) && !(newData instanceof Backbone.Collection)) {
+						console.log(data, dataAttrValue);
+						throw "error changing context: model's field doesn't contain model/collection (see above)";
+					}
+					
+					if (!(data instanceof Backbone.CollectionModel) && (newData instanceof Backbone.Collection)) {
+						data = new Backbone.CollectionModel({}, {collection : newData});
+					} else {
+						data = newData;
+					}
+				}
 				
 				// render collection
 				if (data instanceof Backbone.Collection) {
 					var collection = data;
-					if (dataAttrValue == "models") {
-						collection.each(function(model) {
-							var x = this.clone();
-							recursively(x, model);
-							template.append(x);
-						}, template.children().detach());
-					} else if (template.children().length != 0) {
-						recursively(template.children(), data);
-					}
+					collection.each(function(model) {
+						var x = this.clone();
+						recursively(x, model);
+						template.append(x);
+					}, template.children().detach());
 				}	
 				// render model
 				else if (data instanceof Backbone.Model) {
@@ -125,11 +146,29 @@
 						recursively(template.children(), data);
 					}
 				} else {
-					throw "model/collection required";
+					throw "model/collection required, got: " + data;
 				}
 				
 				
 			}
+			/*
+			function backbonize(obj) {
+				var callee = arguments.callee;
+				if (_.isArray(obj)) {
+					return new Backbone.Collection(_(obj).map(function(item) {
+						return callee(item);
+					}));
+				} else if (_.isObject(obj)) {
+					var result = {};
+					_(obj).chain().keys().each(function(key) {
+						result[key] = callee(obj[key]);
+					});
+					return new Backbone.Model(result);
+				} else {
+					return obj;
+				}
+			};
+			*/
 		
 			// calls the real function with correct default state
 			return function(template, data) {
