@@ -3,43 +3,120 @@
 	var attrNames = {
 		data : "data",
 		hovered : "hovered",
-		rendered : "rendered"
+		rendered : "rendered",
+		click : "click"
+	};
+
+	function Accessor(negated, attribute, callable) {
+		this.negated = negated;
+		this.attribute = attribute;
+		this.callable = callable
+	};
+	Accessor.parse = (function() {
+		var regex = /^(\!?)(\s*)(\w+)(\(\))?(.*)$/;
+		var parse = function(property) {
+			property = property.trim();
+			var parsed = regex.exec(property);
+			if (parsed) {
+				var exclamationMark = parsed[1];
+				var property = parsed[3];
+				var braces = parsed[4];
+				var tail = parsed[5];
+				if (tail.length !== 0) throw Backbone.Templates.Exceptions.BadAccessorSyntax;
+				return new Accessor(exclamationMark == "!", property, braces == "()");
+			};
+			throw Backbone.Templates.Exceptions.BadAccessorSyntax;
+		}
+		return parse;
+	})();
+	Accessor.prototype = {
+		/** Subscribe to changes of model's attribute. */
+		bind : function(model, handler) {
+			model.bind("change:" + this.attribute, function() {
+				handler(this.get(model));
+			}, this);
+			handler(this.get(model));
+		},
+		
+		/** Get the value of model's attribute. */
+		get : function(model) {
+		
+			var value = model.get(this.attribute);			
+			
+			if (this.negated) {
+				if (!_.isBoolean(value)) {
+					console.log(model, this.attribute, value);
+					throw Backbone.Templates.Exceptions.NotBooleanAttribute;
+				} else {
+					return !value;
+				}
+			} else {
+				if (!model.has(this.attribute)) {
+					console.log(model, this.attribute);
+					throw Backbone.Templates.Exceptions.NoSuchAttribute;
+				};
+				return value;
+			}
+			
+		},
+		
+		set : function(model, value) {
+			if (this.callable) {
+				var method = model[this.attribute];
+				if (!_.isFunction(method)) {
+					console.log(model, this.attribute, method);
+					throw Backbone.Templates.Exceptions.NoSuchMethod;
+				} else {
+					model[this.attribute].apply(model, Array.prototype.slice.call(arguments, 1));
+				}				
+			} else {
+				model.set(this.attribute, value);
+			}
+		}
+		
 	};
 	
+	
 	var attrHandlers = {};
-	attrHandlers[attrNames.hovered] = function(template, model, attrValue) {
-		model.set(attrValue, false);
+	attrHandlers[attrNames.hovered] = function(template, model, accessor) {
+		accessor.set(model, false);
 		template.mouseover(function() {
 			console.log("mouseover", template);
-			model.set(attrValue, true);
+			accessor.set(model, true);
 		});
 		template.mouseout(function() {
 			console.log("mouseout", template);
-			model.set(attrValue, false);
+			accessor.set(model, false);
 		});
 	};
 	
-	attrHandlers[attrNames.rendered] = function(template, model, attrValue) {
+	attrHandlers[attrNames.rendered] = function(template, model, accessor) {
 		var next = template.next();
 		var parent = template.parent();
 		var prev = template.prev();
 		if (prev.length === 0) {
-			model.bind("change:" + attrValue, _.tap(function() {
-				if (model.get(attrValue)) {
+			accessor.bind(model, function(value) {
+				if (value) {
 					parent.prepend(template);
 				} else {
 					template.detach();
 				}
-			}, function(fn) {fn()}));
+			});
 		} else if (next.length === 0) {
-			model.bind("change:" + attrValue, _.tap(function() {
-				if (model.get(attrValue)) {
+			accessor.bind(model, function(value) {
+				if (value) {
 					parent.append(template);
 				} else {
 					template.detach();
 				}
-			}, function(fn) {fn()}));
+			});
 		}
+	};	
+	
+	attrHandlers[attrNames.click] = function(template, model, accessor) {
+		template.click(function() {
+			accessor.set(model);
+		});
 	};
 
 	Backbone.Templates = {
@@ -98,11 +175,23 @@
 				// render collection
 				if (data instanceof Backbone.Collection) {
 					var collection = data;
+					var parent = template;
+					var template = template.children().detach()
 					collection.each(function(model) {
-						var x = this.clone();
+						var x = template.clone();
 						recursively(x, model);
-						template.append(x);
-					}, template.children().detach());
+						parent.append(x);
+					});
+					collection.bind("add", function(model, collection, options) {
+						var templateCopy = template.clone();
+						recursively(templateCopy, model);
+						if (options.index === 0) {
+							parent.prepend(templateCopy);
+						} else {
+							console.log(parent.children())
+							$(parent.children()[options.index * template.length - 1]).after(templateCopy);
+						}
+					});
 				}	
 				// render model
 				else if (data instanceof Backbone.Model) {
@@ -129,7 +218,7 @@
 						// handling of special attributes
 						} else {
 							var handler = attrHandlers[attr.name];
-							if (handler) handler(template, model, attr.value);
+							if (handler) handler(template, model, Accessor.parse(attr.value));
 						}
 					});
 					
@@ -150,9 +239,33 @@
 				}
 				
 				
+			};
+
+		
+			// calls the real function with correct default state
+			return function(template, data) {
+				bind(template, data, {level : 0});
 			}
-			/*
-			function backbonize(obj) {
+		})()
+		
+		,
+		setup : function(options) {
+		},
+		
+		/**
+		 * Exposed for testing purposes only and not intended
+		 * to be used outside of the library.
+		 */
+		Internals : {
+			Accessor : Accessor
+		},
+		
+		Util : {
+			/**
+			 * Returns a copy of an argument, where all objects are substituted
+			 * with backbone models and arrays with collections.
+			 */
+			backbonize : function(obj) {
 				var callee = arguments.callee;
 				if (_.isArray(obj)) {
 					return new Backbone.Collection(_(obj).map(function(item) {
@@ -167,19 +280,16 @@
 				} else {
 					return obj;
 				}
-			};
-			*/
-		
-			// calls the real function with correct default state
-			return function(template, data) {
-				bind(template, data, {level : 0});
 			}
-		})()
+		},
 		
-		,
-		setup : function(options) {
+		Exceptions : {
+			NotBooleanAttribute : "not boolean attribute",
+			NoSuchAttribute : "no such attribute",
+			NoSuchMethod : "no such method",
+			BadAccessorSyntax : "bad accessor syntax"
 		}
-		
+				
 	}
 })();
 

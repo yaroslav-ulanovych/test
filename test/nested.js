@@ -1,4 +1,6 @@
 describe("Bacbone.Templates", function() {
+
+	var backbonize = Backbone.Templates.Util.backbonize;
 	
 	describe("should render nested", function() {
 		it("models", function() {

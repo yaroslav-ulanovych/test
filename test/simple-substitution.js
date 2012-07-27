@@ -1,5 +1,7 @@
 describe("Bacbone.Templates", function() {
 
+	var backbonize = Backbone.Templates.Util.backbonize;
+
 	describe("should substitute", function() {
 		
 		describe("content placeholders", function() {

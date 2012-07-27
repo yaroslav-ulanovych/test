@@ -18,16 +18,20 @@
 
 <script type="text/javascript">
 $(function() {
-	var PersonModel = Backbone.Model.extend({
-		initialize : function() {
-			this.on("change", function() {
-				//console.log("change", arguments);
-			});
+
+	var NewKeyValuePairModel = Backbone.Model.extend({
+		add : function() {
+			keyValuePairs.add({key: "k1", value: "v1"});
 		}
 	});
+	
+	var keyValuePairs = new Backbone.Collection([{key: "k1", value: "v1"}, {key: "k2", value: "v2"}]);
+	
+	
+
 	var data = new Backbone.Model({
-		newKeyValuePair : {},
-		keyValuePairs : new Backbone.Collection([{key: "k1", value: "v1"}, {key: "k2", value: "v2"}])
+		newKeyValuePair : new NewKeyValuePairModel(),
+		keyValuePairs : keyValuePairs
 	});
 	
 	Backbone.Templates.bind($("#component"), data);
@@ -51,9 +55,11 @@ $(function() {
 				<ul data="collection"><li><span>$key</span> : <span>$value</span></li></ul>
 			</div>
 		</div>
-		<input></input>
-		<input></input>
-		<button class="btn btn-primary">Add</button>
+		<div data="newKeyValuePair">
+			<input></input>
+			<input></input>
+			<button class="btn btn-primary" click="add()">Add</button>
+		</div>
 	</div>
 <div>
 

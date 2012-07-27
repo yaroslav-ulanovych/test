@@ -1,4 +1,6 @@
 describe("Bacbone.Templates", function() {
+
+	var backbonize = Backbone.Templates.Util.backbonize;
 	
 	describe("should render collection", function() {
 		
@@ -37,6 +39,48 @@ describe("Bacbone.Templates", function() {
 			expect(template.children("span:nth-child(3)").text()).toBe("6");
 		});
 		
+	});
+	
+	describe("while rendering collections should reflect changes", function() {
+		var collection;
+		var template = $("<div data='collection'><span>$name</span><span>$age</span></div>");
+		
+		it("given an empty collection", function() {
+			collection = new Backbone.Collection();
+			expect(collection.length).toBe(0);
+		});
+		
+		it("when the collection is bound to a template", function() {
+			Backbone.Templates.bind(template, collection);
+		});
+		
+		it("then the template should be empty", function() {
+			expect(template.children().length).toBe(0);
+		});
+		
+		it("when a model is added to the empty collection", function() {
+			collection.add({name: "name1", age: "age1"});
+			expect(template.children("span:nth-child(1)").text()).toBe("name1");
+			expect(template.children("span:nth-child(2)").text()).toBe("age1");
+		});
+		
+		it("when a model is added to the beginning of the collection", function() {
+			collection.add({name: "name2", age: "age2"}, {at : 0});
+			expect(template.children("span:nth-child(1)").text()).toBe("name2");
+			expect(template.children("span:nth-child(2)").text()).toBe("age2");
+		});		
+		
+		it("when a model is added to the end of the collection", function() {
+			collection.add({name: "name3", age: "age3"});
+			expect(template.children("span:nth-child(5)").text()).toBe("name3");
+			expect(template.children("span:nth-child(6)").text()).toBe("age3");
+		});
+		
+		it("when a model is inserted in the middle of the collection", function() {
+			collection.add({name: "name4", age: "age4"}, {at : 1});
+			expect(template.children("span:nth-child(3)").text()).toBe("name4");
+			expect(template.children("span:nth-child(4)").text()).toBe("age4");
+		});
 	});
 
 });
