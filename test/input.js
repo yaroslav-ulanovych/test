@@ -1,14 +1,15 @@
 describe("Backbone.Templates", function() {
 
-	describe("click", function() {
+	describe("input", function() {
 		it("should work", function() {
-			var template = $("<div click='click()'>");
+			var template = $("<input type='text' input='input'>");
+			template.val("as");
 			var model = new Backbone.Model();
-			var click = jasmine.createSpy("click");
-			model.click = click;
 			Backbone.Templates.bind(template, model);
-			template.click();
-			expect(click).toHaveBeenCalled();
+			expect(model.get("input")).toBe("as");
+			template.val("qw");
+			template.trigger("input");
+			expect(model.get("input")).toBe("qw");
 		});
 	});
 

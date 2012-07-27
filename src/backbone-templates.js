@@ -4,7 +4,8 @@
 		data : "data",
 		hovered : "hovered",
 		rendered : "rendered",
-		click : "click"
+		click : "click",
+		input : "input"
 	};
 
 	function Accessor(negated, attribute, callable) {
@@ -14,17 +15,19 @@
 	};
 	Accessor.parse = (function() {
 		var regex = /^(\!?)(\s*)(\w+)(\(\))?(.*)$/;
-		var parse = function(property) {
-			property = property.trim();
+		var parse = function(rawProperty) {
+			var property = rawProperty.trim();
 			var parsed = regex.exec(property);
 			if (parsed) {
 				var exclamationMark = parsed[1];
 				var property = parsed[3];
 				var braces = parsed[4];
 				var tail = parsed[5];
+				console.log(rawProperty);
 				if (tail.length !== 0) throw Backbone.Templates.Exceptions.BadAccessorSyntax;
 				return new Accessor(exclamationMark == "!", property, braces == "()");
 			};
+			console.log(rawProperty);
 			throw Backbone.Templates.Exceptions.BadAccessorSyntax;
 		}
 		return parse;
@@ -117,6 +120,13 @@
 		template.click(function() {
 			accessor.set(model);
 		});
+	};	
+	
+	attrHandlers[attrNames.input] = function(template, model, accessor) {
+		template.on("input", function() {
+			accessor.set(model, template.val());
+		});
+		accessor.set(model, template.val());
 	};
 
 	Backbone.Templates = {
@@ -188,9 +198,13 @@
 						if (options.index === 0) {
 							parent.prepend(templateCopy);
 						} else {
-							console.log(parent.children())
 							$(parent.children()[options.index * template.length - 1]).after(templateCopy);
 						}
+					});					
+					collection.bind("remove", function(model, collection, options) {
+						//TODO test me
+						//TODO remove listeners
+						$(parent.children().slice(options.index * template.length, options.index * template.length + template.length)).detach();
 					});
 				}	
 				// render model

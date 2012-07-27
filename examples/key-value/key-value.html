@@ -21,13 +21,11 @@ $(function() {
 
 	var NewKeyValuePairModel = Backbone.Model.extend({
 		add : function() {
-			keyValuePairs.add({key: "k1", value: "v1"});
+			keyValuePairs.add(this.toJSON());
 		}
 	});
 	
 	var keyValuePairs = new Backbone.Collection([{key: "k1", value: "v1"}, {key: "k2", value: "v2"}]);
-	
-	
 
 	var data = new Backbone.Model({
 		newKeyValuePair : new NewKeyValuePairModel(),
@@ -45,19 +43,27 @@ $(function() {
 
 <div id="content">
 	<div id="overview">
-		<h5>An example of a component, that allows to input a list of key value pairs.
-		Keys must be unique and non-empty.</h5>
+		<h5>An example of a component, that allows to input a list of key value pairs.</h5>
 	</div>
 	<div id="component">
 		<div data="keyValuePairs">
 			<div rendered="empty">No items</div>
 			<div rendered="!empty">
-				<ul data="collection"><li><span>$key</span> : <span>$value</span></li></ul>
+				<ul class="list" data="collection">
+					<li hovered="hovered">
+						<span>$key</span>
+						<span> : </span>
+						<span>$value</span>
+						<div rendered="hovered" hovered="hovered">
+							<button hovered="hovered" class="btn btn-danger" click="destroy()">Delete</button>
+						</div>
+					</li>
+				</ul>
 			</div>
 		</div>
 		<div data="newKeyValuePair">
-			<input></input>
-			<input></input>
+			<input input="key"></input>
+			<input input="value"></input>
 			<button class="btn btn-primary" click="add()">Add</button>
 		</div>
 	</div>

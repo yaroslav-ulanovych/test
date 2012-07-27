@@ -4,3 +4,15 @@
 	margin-right: auto;
 	margin-top: 50px;
 }
+
+.list > li {
+	
+}
+
+.list > li > div {
+	display: inline;
+/*	position: absolute;
+	top: 0px;
+	left: 0px
+*/
+}
