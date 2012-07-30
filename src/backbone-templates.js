@@ -13,6 +13,7 @@
 		this.attribute = attribute;
 		this.callable = callable
 	};
+
 	Accessor.parse = (function() {
 		var regex = /^(\!?)(\s*)(\w+)(\(\))?(.*)$/;
 		var parse = function(rawProperty) {
@@ -44,7 +45,7 @@
 		/** Get the value of model's attribute. */
 		get : function(model) {
 		
-			var value = model.get(this.attribute);			
+			var value = model.get(this.attribute);
 			
 			if (this.negated) {
 				if (!_.isBoolean(value)) {
@@ -79,17 +80,20 @@
 		
 	};
 	
-	
 	var attrHandlers = {};
+
 	attrHandlers[attrNames.hovered] = function(template, model, accessor) {
 		accessor.set(model, false);
 		template.mouseover(function() {
 			console.log("mouseover", template);
 			accessor.set(model, true);
 		});
-		template.mouseout(function() {
+		template.mouseout(function(e) {
 			console.log("mouseout", template);
-			accessor.set(model, false);
+			// avoid blinking with nested elements
+			if (!template.is(":hover")) {
+				accessor.set(model, false);
+			}
 		});
 	};
 	
@@ -206,6 +210,14 @@
 						//TODO remove listeners
 						$(parent.children().slice(options.index * template.length, options.index * template.length + template.length)).detach();
 					});
+					collection.bind("reset", function() {
+						parent.empty();
+							collection.each(function(model) {
+							var x = template.clone();
+							recursively(x, model);
+							parent.append(x);
+						});
+					});
 				}	
 				// render model
 				else if (data instanceof Backbone.Model) {
@@ -236,6 +248,7 @@
 						}
 					});
 					
+					
 					if (template.children().length == 0) {
 						// substitute content
 						var text = template.text();
@@ -248,6 +261,7 @@
 					} else {
 						recursively(template.children(), data);
 					}
+					
 				} else {
 					throw "model/collection required, got: " + data;
 				}
