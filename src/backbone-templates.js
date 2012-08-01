@@ -96,7 +96,7 @@
 			}
 		});
 	};
-	
+
 	attrHandlers[attrNames.rendered] = function(template, model, accessor) {
 		var next = template.next();
 		var parent = template.parent();
@@ -118,8 +118,8 @@
 				}
 			});
 		}
-	};	
-	
+	};
+
 	attrHandlers[attrNames.click] = function(template, model, accessor) {
 		template.click(function() {
 			accessor.set(model);
@@ -139,17 +139,17 @@
 		
 			// real bind function
 			function bind(template, data, state) {
-			
+
 				if (data instanceof Backbone.Collection) {
 					data = new Backbone.CollectionModel({}, {collection : data});
 				}
-						
+
 				var recursively = function(template, data) {
 					var stateCopy = _.clone(state);
 					stateCopy.level = stateCopy.level + 1;
 					return bind.call(this, template, data, stateCopy);
 				};
-				
+
 				function log() {
 					var pre = "";
 					_.times(state.level, function() {pre = pre + "  "});
@@ -165,10 +165,11 @@
 					});
 					return;
 				}
+
 				log("processing " + template[0].tagName.toLowerCase());
-				
+
 				// real work starts
-				
+
 				// change context
 				var dataAttrValue = template.attr(attrNames.data);
 				if (dataAttrValue) {
@@ -185,7 +186,7 @@
 						data = newData;
 					}
 				}
-				
+
 				// render collection
 				if (data instanceof Backbone.Collection) {
 					var collection = data;
@@ -204,7 +205,7 @@
 						} else {
 							$(parent.children()[options.index * template.length - 1]).after(templateCopy);
 						}
-					});					
+					});
 					collection.bind("remove", function(model, collection, options) {
 						//TODO test me
 						//TODO remove listeners
@@ -218,7 +219,7 @@
 							parent.append(x);
 						});
 					});
-				}	
+				}
 				// render model
 				else if (data instanceof Backbone.Model) {
 					var model = data;
@@ -247,8 +248,7 @@
 							if (handler) handler(template, model, Accessor.parse(attr.value));
 						}
 					});
-					
-					
+
 					if (template.children().length == 0) {
 						// substitute content
 						var text = template.text();
@@ -261,25 +261,24 @@
 					} else {
 						recursively(template.children(), data);
 					}
-					
+
 				} else {
 					throw "model/collection required, got: " + data;
 				}
-				
-				
+
 			};
 
-		
+
 			// calls the real function with correct default state
 			return function(template, data) {
 				bind(template, data, {level : 0});
 			}
 		})()
-		
+
 		,
 		setup : function(options) {
 		},
-		
+
 		/**
 		 * Exposed for testing purposes only and not intended
 		 * to be used outside of the library.
@@ -310,14 +309,14 @@
 				}
 			}
 		},
-		
+
 		Exceptions : {
 			NotBooleanAttribute : "not boolean attribute",
 			NoSuchAttribute : "no such attribute",
 			NoSuchMethod : "no such method",
 			BadAccessorSyntax : "bad accessor syntax"
 		}
-				
+
 	}
 })();
 
