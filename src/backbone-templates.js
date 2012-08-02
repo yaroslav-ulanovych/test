@@ -1,5 +1,69 @@
 (function() {
 
+	var ViewModel = Backbone.Model.extend({
+		initialize : function(attrs, options) {
+			
+		},
+		set : function(attributes, options) {
+			// set attributes to the model
+			var valid = this.model.set.apply(this.model, arguments);
+			// set the same attributes to the view model
+			Backbone.Model.prototype.set.apply(this, arguments);
+			// set additional attributes to the view model
+			Backbone.Model.prototype.set.call(this, { valid : valid });
+
+			return valid;
+		}
+	});
+	
+	var ViewCollection = Backbone.Collection.extend({
+		//model : Backbone.ViewModel,
+
+		constructor : function(collection, options) {
+			this.viewModel = new Backbone.Model({
+				empty : this.length === 0
+			});
+			
+			this.bind("add", function(model, collection, options) {
+				collection.viewModel.set("empty", false);
+			});			
+			this.bind("remove", function(model, collection, options) {
+				collection.viewModel.set("empty", collection.length === 0);
+			});
+			this.bind("reset", function(collection, options) {
+				collection.viewModel.set("empty", collection.length === 0);
+			});
+			
+			Backbone.Collection.apply(this, arguments);
+			
+			this.viewModel.set({empty : this.length === 0});
+		}
+	});
+	
+	var CollectionModel = Backbone.Model.extend({
+		initialize : function(attrs, options) {
+		
+			var collection = options.collection;
+			
+			collection.bind("add", function(model, collection, options) {
+				this.set("empty", false);
+			}, this);			
+			
+			collection.bind("remove", function(model, collection, options) {
+				this.set("empty", collection.length === 0);
+			}, this);
+			
+			collection.bind("reset", function(collection, options) {
+				this.set("empty", collection.length === 0);
+			}, this);
+			
+			this.set({
+				empty : collection.length === 0,
+				collection : collection
+			});
+		}
+	});
+
 	var attrNames = {
 		data : "data",
 		hovered : "hovered",
@@ -24,7 +88,6 @@
 				var property = parsed[3];
 				var braces = parsed[4];
 				var tail = parsed[5];
-				console.log(rawProperty);
 				if (tail.length !== 0) throw Backbone.Templates.Exceptions.BadAccessorSyntax;
 				return new Accessor(exclamationMark == "!", property, braces == "()");
 			};
@@ -33,6 +96,7 @@
 		}
 		return parse;
 	})();
+
 	Accessor.prototype = {
 		/** Subscribe to changes of model's attribute. */
 		bind : function(model, handler) {
@@ -130,7 +194,9 @@
 		template.on("input", function() {
 			accessor.set(model, template.val());
 		});
-		accessor.set(model, template.val());
+		accessor.bind(model, function(value) {
+			template.val(value);
+		});
 	};
 
 	Backbone.Templates = {
@@ -141,7 +207,7 @@
 			function bind(template, data, state) {
 
 				if (data instanceof Backbone.Collection) {
-					data = new Backbone.CollectionModel({}, {collection : data});
+					data = new CollectionModel({}, {collection : data});
 				}
 
 				var recursively = function(template, data) {
@@ -180,8 +246,8 @@
 						throw "error changing context: model's field doesn't contain model/collection (see above)";
 					}
 					
-					if (!(data instanceof Backbone.CollectionModel) && (newData instanceof Backbone.Collection)) {
-						data = new Backbone.CollectionModel({}, {collection : newData});
+					if (!(data instanceof CollectionModel) && (newData instanceof Backbone.Collection)) {
+						data = new CollectionModel({}, {collection : newData});
 					} else {
 						data = newData;
 					}
@@ -284,7 +350,9 @@
 		 * to be used outside of the library.
 		 */
 		Internals : {
-			Accessor : Accessor
+			Accessor : Accessor,
+			CollectionModel : CollectionModel,
+			ViewCollection : ViewCollection
 		},
 		
 		Util : {

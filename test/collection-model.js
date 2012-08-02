@@ -1,9 +1,12 @@
 describe("Bacbone.CollectionModel", function() {
+
+	var CollectionModel = Backbone.Templates.Internals.CollectionModel;
+	var ViewCollection = Backbone.Templates.Internals.ViewCollection;
 	
 	describe("the empty attribute", function() {
 	
 		var collection = new Backbone.Collection();
-		var model = new Backbone.CollectionModel({}, {collection: collection});
+		var model = new CollectionModel({}, {collection: collection});
 	
 		it("given an empty collection", function() {
 			expect(collection.length).toBe(0);
@@ -31,8 +34,8 @@ describe("Bacbone.CollectionModel", function() {
 		});
 		
 		it("given a non-empty collection", function() {
-			collection = new Backbone.ViewCollection([{}, {}]);
-			model = new Backbone.CollectionModel({}, {collection: collection});
+			collection = new ViewCollection([{}, {}]);
+			model = new CollectionModel({}, {collection: collection});
 			expect(collection.length).toBe(2);
 		});
 		
@@ -55,7 +58,7 @@ describe("Bacbone.CollectionModel", function() {
 	describe("the collection attribute", function() {
 		it("should be set to the collection, the model was initialized with", function() {
 			var collection = new Backbone.Collection();
-			var model = new Backbone.CollectionModel({}, {collection: collection});
+			var model = new CollectionModel({}, {collection: collection});
 			expect(model.get("collection")).toBe(collection);
 		});
 	});
