@@ -22,7 +22,7 @@ function callbacksCount(model) {
 
 	describe("sholud remove event handlers from models", function() {
 
-		it("when templates are conditionally rendered", function() {
+		xit("when templates are conditionally rendered", function() {
 			var template = $("<div><div rendered='rendered'><span id='$id'>$name</span><span id='$id'>$age</span></div></div>");
 			var model = new Backbone.Model({rendered: true});
 			Backbone.Templates.bind(template, model);

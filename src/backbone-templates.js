@@ -1,21 +1,66 @@
 (function() {
 
-	var ViewModel = Backbone.Model.extend({
-		initialize : function(attrs, options) {
-			
-		},
-		set : function(attributes, options) {
-			// set attributes to the model
-			var valid = this.model.set.apply(this.model, arguments);
-			// set the same attributes to the view model
-			Backbone.Model.prototype.set.apply(this, arguments);
-			// set additional attributes to the view model
-			Backbone.Model.prototype.set.call(this, { valid : valid });
 
-			return valid;
+	var ViewModel = Backbone.Model.extend({
+		constructor : function(model) {
+			this.options = {model : model};
+			Backbone.Model.apply(this);
+		},
+
+		initialize : function() {
+			var model = this.options.model;
+
+			_.each(model.toJSON(), function(value, key) {
+				this.set(key, new FieldModel(key, model));
+			}, this);
+
 		}
 	});
-	
+
+	var FieldModel = Backbone.Model.extend({
+		constructor : function(field, model) {
+			this.options = {
+				field : field,
+				model : model
+			};
+
+			Backbone.Model.apply(this);
+		},
+
+		initialize : function() {
+			this.set("value", this.options.model.get(this.options.field));
+
+			this.options.model.on("change:" + this.options.field, function() {
+				this.set("value", this.options.model.get(this.options.field));
+			}, this);
+
+			// update model's field when the value attribute is changed
+			this.on("change:value", function() {
+				this.options.model.set(this.options.field, this.get("value"));
+			}, this);
+		},
+
+		save : function(data) {
+			// remember toJSON
+			var ownToJSON = _.has(this.options.model, "toJSON");
+			var toJSON = this.options.model.toJSON;
+
+			// replace toJSON
+			this.options.model.toJSON = function() { return data; };
+
+			this.options.model.save({}, {wait : true});
+
+			// restore toJSON
+			if (ownToJSON) {
+				this.options.model.toJSON = toJSON;
+			} else {
+				this.options.model.toJSON = undefined;
+			}
+			
+		}
+
+	});
+
 	var ViewCollection = Backbone.Collection.extend({
 		//model : Backbone.ViewModel,
 
@@ -26,7 +71,7 @@
 			
 			this.bind("add", function(model, collection, options) {
 				collection.viewModel.set("empty", false);
-			});			
+			});
 			this.bind("remove", function(model, collection, options) {
 				collection.viewModel.set("empty", collection.length === 0);
 			});
@@ -47,7 +92,7 @@
 			
 			collection.bind("add", function(model, collection, options) {
 				this.set("empty", false);
-			}, this);			
+			}, this);
 			
 			collection.bind("remove", function(model, collection, options) {
 				this.set("empty", collection.length === 0);
@@ -80,6 +125,7 @@
 
 	Accessor.parse = (function() {
 		var regex = /^(\!?)(\s*)(\w+)(\(\))?(.*)$/;
+
 		var parse = function(rawProperty) {
 			var property = rawProperty.trim();
 			var parsed = regex.exec(property);
@@ -94,6 +140,7 @@
 			console.log(rawProperty);
 			throw Backbone.Templates.Exceptions.BadAccessorSyntax;
 		}
+
 		return parse;
 	})();
 
@@ -108,9 +155,15 @@
 		
 		/** Get the value of model's attribute. */
 		get : function(model) {
-		
 			var value = model.get(this.attribute);
-			
+
+			if (value instanceof FieldModel) value = value.get("value");
+
+			if (_.isUndefined(value)) {
+				console.log(model, this.attribute);
+				throw Backbone.Templates.Exceptions.NoSuchAttribute;
+			};
+
 			if (this.negated) {
 				if (!_.isBoolean(value)) {
 					console.log(model, this.attribute, value);
@@ -119,10 +172,6 @@
 					return !value;
 				}
 			} else {
-				if (!model.has(this.attribute)) {
-					console.log(model, this.attribute);
-					throw Backbone.Templates.Exceptions.NoSuchAttribute;
-				};
 				return value;
 			}
 			
@@ -136,7 +185,7 @@
 					throw Backbone.Templates.Exceptions.NoSuchMethod;
 				} else {
 					model[this.attribute].apply(model, Array.prototype.slice.call(arguments, 1));
-				}				
+				}
 			} else {
 				model.set(this.attribute, value);
 			}
@@ -286,6 +335,7 @@
 						});
 					});
 				}
+
 				// render model
 				else if (data instanceof Backbone.Model) {
 					var model = data;
@@ -335,8 +385,12 @@
 			};
 
 
+			// what is called when you write Backbone.Templates.bind(),
 			// calls the real function with correct default state
 			return function(template, data) {
+				if (data instanceof Backbone.Model) {
+					data = new ViewModel(data);
+				};
 				bind(template, data, {level : 0});
 			}
 		})()
@@ -352,9 +406,11 @@
 		Internals : {
 			Accessor : Accessor,
 			CollectionModel : CollectionModel,
-			ViewCollection : ViewCollection
+			ViewCollection : ViewCollection,
+			ViewModel : ViewModel,
+			FieldModel : FieldModel
 		},
-		
+
 		Util : {
 			/**
 			 * Returns a copy of an argument, where all objects are substituted
@@ -382,7 +438,8 @@
 			NotBooleanAttribute : "not boolean attribute",
 			NoSuchAttribute : "no such attribute",
 			NoSuchMethod : "no such method",
-			BadAccessorSyntax : "bad accessor syntax"
+			BadAccessorSyntax : "bad accessor syntax",
+			UnsupportedOperation : "unsupported operation"
 		}
 
 	}

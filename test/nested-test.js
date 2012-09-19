@@ -4,7 +4,7 @@ describe("Bacbone.Templates", function() {
 	
 	describe("should render nested", function() {
 		it("models", function() {
-			var template = $("<span data='car'>$color</span>");
+			var template = $("<span data='car'><div data=>$color</div></span>");
 			var model = backbonize({car : {color : "red"}});
 			Backbone.Templates.bind(template, model);
 			expect(template.text()).toBe("red");
