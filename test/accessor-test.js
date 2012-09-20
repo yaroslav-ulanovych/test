@@ -57,13 +57,6 @@ describe("Backbone.Templates", function() {
 		});
 
 
-
-		(function() {
-
-
-
-		})();
-
 		describe("get", function() {
 
 			var models = {
@@ -84,6 +77,10 @@ describe("Backbone.Templates", function() {
 				expect : function(accessor, model) { expect(function(){accessor.get(model);}).toThrow(Backbone.Templates.Exceptions.NoSuchAttribute); },
 				message : "throw a NoSuchAttribute exception"
 			}, {
+				pattern : {negated : false, callable : false},
+				expect : function(accessor, model, value) { expect(accessor.get(model)).toBe(value); },
+				message : "return that attribute"
+			}, {
 				pattern : {negated : true, attributeType: "not boolean"},
 				expect : function(accessor, model) { expect(function(){accessor.get(model);}).toThrow(Backbone.Templates.Exceptions.NotBooleanAttribute); },
 				message : "throw a NotBooleanAttribute exception"
@@ -93,99 +90,113 @@ describe("Backbone.Templates", function() {
 				message : "return that attribute negated"
 			}];
 
-
-			_.each(valuesFor.negated, function(negated) {
-				_.each(valuesFor.callable, function(callable) {
-					_.each(valuesFor.attributeType, function(attributeType) {
-						_.each(valuesFor.model, function(model) {
-							_.each(attributeType == "boolean" ? [false, true] : [123], function(value) {
-								var testFound = _.any(expectations, function(expectation) {
-									var current = {
-										negated : negated,
-										callable : callable,
-										attributeType : attributeType,
-										model : model,
-										value : value
-									};
-									if (_.isEqual(_.extend({}, current, expectation.pattern), current)) {
-										var testName = "";
-										testName = testName + (negated ? "negated " : "");
-										testName = testName + (callable ? "callable " : "");
-										testName = testName + "attribute of ";
-										testName = testName + attributeType + " type from ";
-										testName = testName + model + " ";
-										testName = testName + "with " + value + " value should " + expectation.message;
-										var accessor = new Accessor(negated, "fieldName", callable);
-										it(testName, function() {
-											expectation.expect(accessor, models[model](value), value);
-										});
-										return true;
-									};
-									return false;
-								});
-								if (!testFound) {
-									it("not exhaustive match", function() {expect(1).toBe(2)});
-								}
+			_.each(_.product(valuesFor.negated, valuesFor.callable, valuesFor.attributeType, valuesFor.model), _.bind(Function.prototype.apply, function(negated, callable, attributeType, model) {
+				_.each(attributeType == "boolean" ? [false, true] : [123], function(value) {
+					var testFound = _.any(expectations, function(expectation) {
+						var current = {
+							negated : negated,
+							callable : callable,
+							attributeType : attributeType,
+							model : model,
+							value : value
+						};
+						if (_.isEqual(_.extend({}, current, expectation.pattern), current)) {
+							var testName = "";
+							testName = testName + (negated ? "negated " : "");
+							testName = testName + (callable ? "callable " : "");
+							testName = testName + "attribute of ";
+							testName = testName + attributeType + " type from ";
+							testName = testName + model + " ";
+							testName = testName + "with " + value + " value should " + expectation.message;
+							var accessor = new Accessor(negated, "fieldName", callable);
+							it(testName, function() {
+								expectation.expect(accessor, models[model](value), value);
 							});
-						});
+							return true;
+						};
+						return false;
 					});
 				});
-			});
+			}, undefined));
 		});
 
-/*
-			describe("negated attribute", function() {
-			
-				var accessor = new Accessor(true, "a", false);
-			
-				it("should return that attribute negated", function() {
-					expect(accessor.get(new Backbone.Model({a: false}))).toBe(true);
-					expect(accessor.get(new Backbone.Model({a: true}))).toBe(false);
-				});
-				
-				it("or throw an exception if the attribute isn't a boolean", function() {
-					expect(function() {
-						accessor.get(new Backbone.Model({a: ""}))
-					}).toThrow(Backbone.Templates.Exceptions.NotBooleanAttribute);
-				});
-			});
-			
-		});
-*/
 		describe("set", function() {
-			describe("attribute", function() {
-				it("should update the model with the value", function() {
-					var model = new Backbone.Model();
-					var accessor = new Accessor(false, "a", false);
-					accessor.set(model, "asd");
-					expect(model.get("a")).toBe("asd");
-				});
-			});
-			
-			describe("callable attribute", function() {
-				it("should call the method on the model with proper context and arguments", function() {
-					var model = new Backbone.Model();
+			var models = {
+				modelWithMethod : function() { return new Backbone.Model({}) },
+				modelWithoutMethod : function() { return new Backbone.Model() },
+				viewModelWithMethod : function() { return new ViewModel(new Backbone.Model({}))}
+			};
+
+			var valuesFor = {
+				negated : [false, true],
+				callable : [false, true],
+				model : ["modelWithMethod", "modelWithoutMethod", "viewModelWithMethod"]
+			};
+
+			var expectations = [{
+				pattern : {negated : false, callable : true, model : "modelWithMethod"},
+				expect : function(accessor, model) {
 					var result = [];
 					model.method = function() {
 						result[0] = this;
 						result[1] = Array.prototype.slice.call(arguments);
 					};
-					var accessor = new Accessor(false, "method", true);
 					accessor.set(model, 1, 2, 3);
 					expect(result[0]).toBe(model);
 					expect(result[1]).toEqual([1, 2, 3]);
-				});				
-				
-				it("or throw an exception if the model doesn't have such method", function() {
-					var model = new Backbone.Model();
-					var accessor = new Accessor(false, "method", true);
+				},
+				message : "call the method on the model with proper context and arguments"
+			}, {
+				pattern : {negated : false, callable : true, model : "modelWithoutMethod"},
+				expect : function(accessor, model) {
 					expect(function() {
 						accessor.set(model, 1, 2, 3);
 					}).toThrow(Backbone.Templates.Exceptions.NoSuchMethod);
+				},
+				message : "throw a NoSuchMethod exception"
+			}, {
+				pattern : {negated : false, callable : true, model : "viewModelWithMethod"},
+				expect : function(accessor, viewModel) {
+					var result = [];
+					var model = viewModel.options.model;
+					model.method = function() {
+						result[0] = this;
+						result[1] = Array.prototype.slice.call(arguments);
+					};
+					accessor.set(viewModel, 1, 2, 3);
+					expect(result[0]).toBe(model);
+					expect(result[1]).toEqual([1, 2, 3]);
+				},
+				message : "call the method on the model with proper context and arguments"
+			}];
+
+			_.each(_.product(valuesFor.negated, valuesFor.callable, valuesFor.model), _.bind(Function.prototype.apply, function(negated, callable, model) {
+				var testFound = _.any(expectations, function(expectation) {
+					var current = {
+						negated : negated,
+						callable : callable,
+						model : model
+					};
+					if (_.isEqual(_.extend({}, current, expectation.pattern), current)) {
+						var testName = "";
+						testName = testName + (negated ? "negated " : "");
+						testName = testName + (callable ? "callable " : "");
+						testName = testName + " attribute from ";
+						testName = testName + model + " ";
+						testName = testName + "should " + expectation.message;
+						it(testName, function() {
+							var accessor = new Accessor(negated, "method", callable);
+							expectation.expect(accessor, models[model]());
+						});
+						return true;
+					};
+					return false;
 				});
-			});
+			}, undefined));
 		});
-		
+
+
+
 		describe("bind", function() {
 			it("should pass the result of the get method to the handler", function() {
 				var model = new Backbone.Model({a: "1"});
@@ -197,7 +208,7 @@ describe("Backbone.Templates", function() {
 				expect(handler).toHaveBeenCalledWith(123);
 			});
 		});
-	
+
 	});
 
 });

@@ -34,8 +34,66 @@ describe("FieldModel", function() {
 		});
 	});
 
-	it("should save", function() {
-		
+	describe("scenario", function() {
+		var model = new Backbone.Model({a : 123});
+		var fm = new FieldModel("a", model);
+
+		it("initially", function() {});
+
+		it("synced attribute should be true", function() {
+			expect(fm.get("synced")).toBe(true);
+		});
+
+		it("original attribute should be set to field's value", function() {
+			expect(fm.get("original")).toBe(123);
+		});
+
+		it("when the field is changed", function() {
+			model.set("a", 456);
+		});
+
+		it("synced attribute should get false", function() {
+			expect(fm.get("value")).toBe(456);
+			expect(fm.get("synced")).toBe(false);
+		});
+
+		it("when the field is restored to the original value", function() {
+			model.set("a", 123);
+		});
+
+		it("synced attribute should get true", function() {
+			expect(fm.get("synced")).toBe(true);
+		});
+
+		it("after successful save", function() {
+			model.set("a", 789);
+			var sync = Backbone.sync;
+			Backbone.sync = jasmine.createSpy("Backbone.sync").andCallFake(function(method, model, options) {
+				options.success();
+			});
+			fm.save();
+			Backbone.sync = sync;
+		});
+
+		it("synced attribute should get true", function() {
+			expect(fm.get("synced")).toBe(true);
+		});
+
+		it("original attribute should be set to the new value", function() {
+			expect(fm.get("original")).toBe(789);
+		});
+
+	});
+
+
+	describe("cancel", function() {
+		it("should restore model's field to the original state", function() {
+			var model = new Backbone.Model({a : 123});
+			var fm = new FieldModel("a", model);
+			model.set("a", 456);
+			fm.cancel();
+			expect(model.get("a")).toBe(123);
+		});
 	});
 
 });

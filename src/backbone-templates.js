@@ -29,34 +29,63 @@
 
 		initialize : function() {
 			this.set("value", this.options.model.get(this.options.field));
+			this.set("synced", true);
 
-			this.options.model.on("change:" + this.options.field, function() {
-				this.set("value", this.options.model.get(this.options.field));
+			this.set("original", this.options.model.get(this.options.field));
+
+			var model = this.options.model;
+			var field = this.options.field;
+
+			model.on("change:" + field, function() {
+				var newValue = model.get(field);
+				this.set({
+					value : newValue,
+					synced : _.isEqual(newValue, this.get("original"))
+				});
 			}, this);
 
 			// update model's field when the value attribute is changed
 			this.on("change:value", function() {
-				this.options.model.set(this.options.field, this.get("value"));
+				model.set(field, this.get("value"));
 			}, this);
 		},
 
-		save : function(data) {
+		save : function() {
+			var fm = this;
+			var model = this.options.model;
 			// remember toJSON
-			var ownToJSON = _.has(this.options.model, "toJSON");
-			var toJSON = this.options.model.toJSON;
+			var ownToJSON = _.has(model, "toJSON");
+			var toJSON = model.toJSON;
+
+			var data = {};
+			var value = this.get("value");
+			data[this.options.field] = value;
 
 			// replace toJSON
-			this.options.model.toJSON = function() { return data; };
+			model.toJSON = function() { return data; };
 
-			this.options.model.save({}, {wait : true});
+			model.save({}, {
+				wait : true,
+				success : function() {
+					fm.set({
+						synced : true,
+						original : value
+					});
+
+				}
+			});
 
 			// restore toJSON
 			if (ownToJSON) {
-				this.options.model.toJSON = toJSON;
+				model.toJSON = toJSON;
 			} else {
-				this.options.model.toJSON = undefined;
+				model.toJSON = undefined;
 			}
 			
+		},
+
+		cancel : function() {
+			this.options.model.set(this.options.field, this.get("original"));
 		}
 
 	});
@@ -178,6 +207,9 @@
 		},
 		
 		set : function(model, value) {
+			if (model instanceof ViewModel) {
+				model = model.options.model;
+			}
 			if (this.callable) {
 				var method = model[this.attribute];
 				if (!_.isFunction(method)) {
@@ -392,6 +424,7 @@
 					data = new ViewModel(data);
 				};
 				bind(template, data, {level : 0});
+				template.show();
 			}
 		})()
 

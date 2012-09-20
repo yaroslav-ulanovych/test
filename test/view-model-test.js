@@ -16,5 +16,11 @@ describe("Bacbone.ViewModel", function() {
 		expect(vm.get("b").options.field).toBe("b");
 	});
 
+	it("should have the model it was created with in it's options", function() {
+		var model = new Backbone.Model();
+		var vm = new ViewModel(model);
+		expect(vm.options.model).toBe(model);
+	});
+
 
 });
