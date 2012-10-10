@@ -1,6 +1,9 @@
 (function() {
 
 
+	/**
+	 * Just a collection of field models.
+	 */
 	var ViewModel = Backbone.Model.extend({
 		constructor : function(model) {
 			this.options = {model : model};
@@ -176,7 +179,7 @@
 	Accessor.prototype = {
 		/** Subscribe to changes of model's attribute. */
 		bind : function(model, handler) {
-			model.bind("change:" + this.attribute, function() {
+			model.bind(this.callable ? "change" : ("change:" + this.attribute), function() {
 				handler(this.get(model));
 			}, this);
 			handler(this.get(model));
@@ -184,26 +187,34 @@
 		
 		/** Get the value of model's attribute. */
 		get : function(model) {
-			var value = model.get(this.attribute);
-
-			if (value instanceof FieldModel) value = value.get("value");
-
-			if (_.isUndefined(value)) {
-				console.log(model, this.attribute);
-				throw Backbone.Templates.Exceptions.NoSuchAttribute;
-			};
-
-			if (this.negated) {
-				if (!_.isBoolean(value)) {
-					console.log(model, this.attribute, value);
-					throw Backbone.Templates.Exceptions.NotBooleanAttribute;
-				} else {
-					return !value;
+			if (this.callable) {
+				var method = ((model instanceof ViewModel) ? model.options.model : model)[this.attribute];
+				if (!_.isFunction(method)) {
+					console.log(model, this)
+					throw Backbone.Templates.Exceptions.NoSuchMethod;
 				}
+				return method.call(model);
 			} else {
-				return value;
+				var value = model.get(this.attribute);
+
+				if (value instanceof FieldModel) value = value.get("value");
+
+				if (_.isUndefined(value)) {
+					console.log(model, this.attribute);
+					throw Backbone.Templates.Exceptions.NoSuchAttribute;
+				};
+
+				if (this.negated) {
+					if (!_.isBoolean(value)) {
+						console.log(model, this.attribute, value);
+						throw Backbone.Templates.Exceptions.NotBooleanAttribute;
+					} else {
+						return !value;
+					}
+				} else {
+					return value;
+				}
 			}
-			
 		},
 		
 		set : function(model, value) {
@@ -371,13 +382,15 @@
 				// render model
 				else if (data instanceof Backbone.Model) {
 					var model = data;
+
 					// substitute attributes
 					_(template[0].attributes).each(function(attr) {
 						if (attr.value[0] == "$") {
 							var variable = attr.value.substring(1);
-							model.on("change:" + variable, _(function() {
-								template.attr(attr.name, model.get(variable));
-							}).tap(function(f)	{f.call()}));
+							var accessor = Accessor.parse(variable);
+							accessor.bind(model, function(value) {
+								template.attr(attr.name, value);
+							});
 						} else if (attr.value.indexOf("?") != -1) {
 							var parsed = /(.*?|)(\w+)(\s*\?\s*)(\w+)(\s*\:\s*)(\w+)(.*)/.exec(attr.value)
 							if (parsed) {

@@ -25,7 +25,7 @@ describe("Bacbone.Templates", function() {
 			
 		});
 		
-		it("binding templates to models", function() {
+		it("case 1", function() {
 			var template = $("<div data='collection'><span>$name</span></div>");
 			var collection = backbonize([{name: 1}, {name: 2}, {name: 3}]);
 			Backbone.Templates.bind(template, collection);
@@ -38,6 +38,15 @@ describe("Bacbone.Templates", function() {
 			expect(template.children("span:nth-child(1)").text()).toBe("4");
 			expect(template.children("span:nth-child(2)").text()).toBe("5");
 			expect(template.children("span:nth-child(3)").text()).toBe("6");
+		});
+
+		it("case 2", function() {
+			var template = $("<table><tbody data='collection'><tr><td><a href='$link()'></a></td></tr></tbody></table>");
+			var model = new Backbone.Model();
+			model.link = function() {return "link"; };
+			var collection = new Backbone.Collection([model]);
+			Backbone.Templates.bind(template, collection);
+			expect(template.find("a").attr("href")).toBe("link");
 		});
 
 		describe("dynamically", function() {

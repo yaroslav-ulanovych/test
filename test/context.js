@@ -7,7 +7,7 @@ describe("Bacbone.Templates", function() {
 		it("simple model", function() {
 			var template = $("<span>$color</span>");
 			Backbone.Templates.bind(template, backbonize({color : "red"}));
-			expect(template.text()).toBe("red");
+			expect(template.text()).toBe("red1");
 		});
 		
 		it("simple model", function() {

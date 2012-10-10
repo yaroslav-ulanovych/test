@@ -102,6 +102,14 @@ describe("Bacbone.Templates", function() {
 				});
 			});
 			
+			it("with the value of model's method", function() {
+				var methodResult = "abc";
+				var model = new Backbone.Model();
+				model.method = function() { return methodResult; }
+				var template = $("<a href='$method()'></a>");
+				Backbone.Templates.bind(template, model);
+				expect(template.attr("href")).toBe(methodResult);
+			});
 			
 		});
 		
