@@ -26,39 +26,48 @@ describe("Bacbone.ViewModel", function() {
 		expect((new ViewModel(new Backbone.Model({id : 1})).id)).toBe(undefined);
 	});
 
-	describe("fetch", function() {
+	it("should be not syncing initially", function() {
+		expect((new ViewModel(new Backbone.Model()).get("syncing"))).toBe(false);
+	});
 
-		it("should call fetch on the origin model", function() {
+	describe("should substitute the fetch method of the original model so that", function() {
+
+		it("original fetch is still called", function() {
 			var model = new Backbone.Model();
-			var actualThis;
-			model.fetch = function() { actualThis = this; }
-			var vm = new ViewModel(model);
-			vm.fetch()
-			expect(actualThis).toBe(model);
+			var originalFetch = jasmine.createSpy("original fetch");
+			model.fetch = originalFetch;
+			new ViewModel(model);
+			model.fetch()
+			expect(originalFetch).toHaveBeenCalled;
 		});
 
-		it("should set syncing when called", function() {
-			var vm = new ViewModel(new Backbone.Model());
-			vm.options.model.sync = function() {};
-			vm.fetch();
+		it("view model gets syncing when fethc is called", function() {
+			var model = new Backbone.Model();
+			var vm = new ViewModel(model);
+			model.sync = function() {};
+			model.fetch();
 			expect(vm.get("syncing")).toBe(true);
 		});
 
-		it("should reset syncing when finished.", function() {
+		it("should reset syncing when finished", function() {
+			var model = new Backbone.Model();
 			var vm = new ViewModel(new Backbone.Model());
-			vm.options.model.sync = function(method, model, options) { options.success(); };
-			vm.fetch();
+			model.sync = function(method, model, options) { options.success(); };
+			model.fetch();
 			expect(vm.get("syncing")).toBe(false);
 		});
 
-		it("should reset syncing when failed.", function() {
-			var vm = new ViewModel(new Backbone.Model());
-			vm.options.model.sync = function(method, model, options) { options.error(); };
-			vm.fetch();
+		it("should reset syncing when failed", function() {
+			var model = new Backbone.Model();
+			var vm = new ViewModel(model);
+			model.sync = function(method, model, options) { options.error(); };
+			model.fetch();
 			expect(vm.get("syncing")).toBe(false);
 		});
 
 	});
+
+
 
 
 });

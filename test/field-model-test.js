@@ -85,6 +85,35 @@ describe("FieldModel", function() {
 
 	});
 
+	describe("empty attribute", function() {
+		var initiallyEmptyModel = new Backbone.Model();
+		var initiallyFullModel = new Backbone.Model({a : 1});
+		var initiallyEmptyFieldModel = new FieldModel("a", initiallyEmptyModel);
+		var initiallyFullFieldModel = new FieldModel("a", initiallyFullModel);
+
+		it("should be true if there is no such attribute in the model", function() {
+			expect(initiallyEmptyFieldModel.get("empty")).toBe(true);
+		});
+
+		it("should become false if the attribute appeared in the model", function() {
+			initiallyEmptyModel.set({a : 1})
+			expect(initiallyEmptyFieldModel.get("empty")).toBe(false);
+		});
+
+		it("should be false if there is such attribute in the model", function() {
+			expect(initiallyFullFieldModel.get("empty")).toBe(false);
+		});
+
+		it("should become true if the attribute was deleted from the model", function() {
+			initiallyFullModel.unset("a");
+			expect(initiallyFullFieldModel.get("empty")).toBe(true);
+		});
+
+
+
+		
+	});
+
 
 	describe("cancel", function() {
 		it("should restore model's field to the original state", function() {

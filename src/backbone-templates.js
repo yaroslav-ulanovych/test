@@ -14,19 +14,29 @@
 				delete this.id;
 			}, this);
 
-		},
+			this.set("syncing", false);
 
-		fetch : function() {
+			var originalFetch = model.fetch;
 			var self = this;
-			self.set("syncing", true);
-			this.options.model.fetch.call(this.options.model, {
-				success : function() {
-					self.set("syncing", false);
-				},
-				error : function() {
-					self.set("syncing", false);
-				}
-			});
+			model.fetch = function() {
+				self.set("syncing", true);
+				originalFetch.call(model, {
+					success : function() {
+						self.set("syncing", false);
+					},
+					error : function() {
+						self.set("syncing", false);
+					}
+				});
+			}
+		},
+		get : function(attribute) {
+			var result = Backbone.Model.prototype.get.apply(this, arguments);
+			if (_.isUndefined(result)) {
+				result = new FieldModel(attribute, this.options.model)
+				this.set(attribute, result);
+			}
+			return result;
 		}
 	});
 
@@ -49,11 +59,15 @@
 			var model = this.options.model;
 			var field = this.options.field;
 
+
+			this.set("empty", _.isUndefined(model.get(field)));
+
 			model.on("change:" + field, function() {
 				var newValue = model.get(field);
 				this.set({
 					value : newValue,
-					synced : _.isEqual(newValue, this.get("original"))
+					synced : _.isEqual(newValue, this.get("original")),
+					empty : _.isUndefined(newValue)
 				});
 			}, this);
 
@@ -205,9 +219,10 @@
 		/** Get the value of model's attribute. */
 		get : function(model) {
 			if (this.callable) {
-				var method = ((model instanceof ViewModel) ? model.options.model : model)[this.attribute];
+				model = (model instanceof ViewModel) ? model.options.model : model;
+				var method = model[this.attribute];
 				if (!_.isFunction(method)) {
-					console.log(model, this)
+					console.log(model, this.toString())
 					throw Backbone.Templates.Exceptions.NoSuchMethod;
 				}
 				return method.call(model);
@@ -217,13 +232,13 @@
 				if (value instanceof FieldModel) value = value.get("value");
 
 				if (_.isUndefined(value)) {
-					console.log(model, this.attribute);
+					console.log(model, this.toString());
 					throw Backbone.Templates.Exceptions.NoSuchAttribute;
 				};
 
 				if (this.negated) {
 					if (!_.isBoolean(value)) {
-						console.log(model, this.attribute, value);
+						console.log(model, this.toString(), value);
 						throw Backbone.Templates.Exceptions.NotBooleanAttribute;
 					} else {
 						return !value;
@@ -241,7 +256,7 @@
 			if (this.callable) {
 				var method = model[this.attribute];
 				if (!_.isFunction(method)) {
-					console.log(model, this.attribute, method);
+					console.log(model, this.toString(), method);
 					throw Backbone.Templates.Exceptions.NoSuchMethod;
 				} else {
 					model[this.attribute].apply(model, Array.prototype.slice.call(arguments, 1));
@@ -249,8 +264,11 @@
 			} else {
 				model.set(this.attribute, value);
 			}
+		},
+
+		toString : function() {
+			return (this.negated ? "!" : "") + this.attribute + (this.callable ? "()" : "");
 		}
-		
 	};
 	
 	var attrHandlers = {};

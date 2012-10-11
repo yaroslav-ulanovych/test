@@ -104,8 +104,14 @@ describe("Backbone.Templates", function() {
 				message : "throw a NoSuchMethod exception"
 			}, {
 				pattern : {callable : true, model : "model with a method"},
-				expect : function(accessor, model) { expect(accessor.get(model)).toBe("abc"); },
-				message : "return the result of that method"
+				expect : function(accessor, model) {
+					var m = (model instanceof ViewModel) ? model.options.model : model;
+					var actualThis;
+					m.method = function() {actualThis = this; return "asd"; }
+					expect(accessor.get(model)).toBe("asd");
+					expect(actualThis).toBe(m);
+				},
+				message : "call that method in the proper context and return its result"
 			}];
 
 
@@ -247,6 +253,15 @@ describe("Backbone.Templates", function() {
 				accessor.bind(model, handler);
 				model.set("b", "2");
 				expect(handler.callCount).toBe(2);
+			});
+		});
+
+		describe("toString", function() {
+			it("should work", function() {
+				expect((new Accessor(false, "a", false)).toString()).toBe("a");
+				expect((new Accessor(false, "a", true)).toString()).toBe("a()");
+				expect((new Accessor(true, "a", false)).toString()).toBe("!a");
+				expect((new Accessor(true, "a", true)).toString()).toBe("!a()");
 			});
 		});
 
