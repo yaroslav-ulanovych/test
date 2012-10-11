@@ -26,7 +26,7 @@ describe("Bacbone.Templates", function() {
 		});
 		
 		it("case 1", function() {
-			var template = $("<div data='collection'><span>$name</span></div>");
+			var template = $("<div data='collection'><span data='name'>$value</span></div>");
 			var collection = backbonize([{name: 1}, {name: 2}, {name: 3}]);
 			Backbone.Templates.bind(template, collection);
 			expect(template.children("span:nth-child(1)").text()).toBe("1");
@@ -56,7 +56,7 @@ describe("Bacbone.Templates", function() {
 				describe("added", function() {
 
 					var collection = new Backbone.Collection();
-					var template = $("<div data='collection'><span>$name</span><span>$age</span></div>");
+					var template = $("<div data='collection'><span data='name'>$value</span><span data='age'>$value</span></div>");
 					Backbone.Templates.bind(template, collection);
 
 					it("to the empty collection", function() {
@@ -139,7 +139,7 @@ describe("Bacbone.Templates", function() {
 			describe("when the collection is reset", function() {
 
 				var collection = new Backbone.Collection();
-				var template = $("<div data='collection'><span>$name</span><span>$age</span></div>");
+				var template = $("<div data='collection'><span data='name'>$value</span><span data='age'>$value</span></div>");
 				Backbone.Templates.bind(template, collection);
 
 				it("to the populated state", function() {

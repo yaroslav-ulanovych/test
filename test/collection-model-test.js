@@ -1,7 +1,6 @@
 describe("Bacbone.CollectionModel", function() {
 
 	var CollectionModel = Backbone.Templates.Internals.CollectionModel;
-	var ViewCollection = Backbone.Templates.Internals.ViewCollection;
 	
 	describe("the empty attribute", function() {
 	
@@ -34,7 +33,7 @@ describe("Bacbone.CollectionModel", function() {
 		});
 		
 		it("given a non-empty collection", function() {
-			collection = new ViewCollection([{}, {}]);
+			collection = new Backbone.Collection([{}, {}]);
 			model = new CollectionModel({}, {collection: collection});
 			expect(collection.length).toBe(2);
 		});

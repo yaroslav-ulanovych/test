@@ -22,5 +22,43 @@ describe("Bacbone.ViewModel", function() {
 		expect(vm.options.model).toBe(model);
 	});
 
+	it("shouldn't have id", function() {
+		expect((new ViewModel(new Backbone.Model({id : 1})).id)).toBe(undefined);
+	});
+
+	describe("fetch", function() {
+
+		it("should call fetch on the origin model", function() {
+			var model = new Backbone.Model();
+			var actualThis;
+			model.fetch = function() { actualThis = this; }
+			var vm = new ViewModel(model);
+			vm.fetch()
+			expect(actualThis).toBe(model);
+		});
+
+		it("should set syncing when called", function() {
+			var vm = new ViewModel(new Backbone.Model());
+			vm.options.model.sync = function() {};
+			vm.fetch();
+			expect(vm.get("syncing")).toBe(true);
+		});
+
+		it("should reset syncing when finished.", function() {
+			var vm = new ViewModel(new Backbone.Model());
+			vm.options.model.sync = function(method, model, options) { options.success(); };
+			vm.fetch();
+			expect(vm.get("syncing")).toBe(false);
+		});
+
+		it("should reset syncing when failed.", function() {
+			var vm = new ViewModel(new Backbone.Model());
+			vm.options.model.sync = function(method, model, options) { options.error(); };
+			vm.fetch();
+			expect(vm.get("syncing")).toBe(false);
+		});
+
+	});
+
 
 });

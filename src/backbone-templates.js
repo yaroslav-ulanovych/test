@@ -1,9 +1,5 @@
 (function() {
 
-
-	/**
-	 * Just a collection of field models.
-	 */
 	var ViewModel = Backbone.Model.extend({
 		constructor : function(model) {
 			this.options = {model : model};
@@ -15,8 +11,22 @@
 
 			_.each(model.toJSON(), function(value, key) {
 				this.set(key, new FieldModel(key, model));
+				delete this.id;
 			}, this);
 
+		},
+
+		fetch : function() {
+			var self = this;
+			self.set("syncing", true);
+			this.options.model.fetch.call(this.options.model, {
+				success : function() {
+					self.set("syncing", false);
+				},
+				error : function() {
+					self.set("syncing", false);
+				}
+			});
 		}
 	});
 
@@ -97,23 +107,30 @@
 		//model : Backbone.ViewModel,
 
 		constructor : function(collection, options) {
-			this.viewModel = new Backbone.Model({
-				empty : this.length === 0
-			});
-			
-			this.bind("add", function(model, collection, options) {
-				collection.viewModel.set("empty", false);
-			});
-			this.bind("remove", function(model, collection, options) {
-				collection.viewModel.set("empty", collection.length === 0);
-			});
-			this.bind("reset", function(collection, options) {
-				collection.viewModel.set("empty", collection.length === 0);
-			});
-			
-			Backbone.Collection.apply(this, arguments);
-			
-			this.viewModel.set({empty : this.length === 0});
+
+			collection.bind("add", function(model, collection, options) {
+				this.add(new ViewModel(model), {
+					at : options.at
+				});
+			}, this);
+
+			collection.bind("remove", function(model, collection, options) {
+				this.remove(this.find(function(viewModel) {
+					return viewModel.options.model === model;
+				}));
+			}, this);
+
+			collection.bind("reset", function(collection, options) {
+				this.reset(collection.map(function(model) {
+					return new ViewModel(model);
+				}));
+			}, this);
+
+			Backbone.Collection.call(this, collection.map(function(model) {
+				return new ViewModel(model);
+			}));
+
+
 		}
 	});
 	
@@ -299,7 +316,7 @@
 			function bind(template, data, state) {
 
 				if (data instanceof Backbone.Collection) {
-					data = new CollectionModel({}, {collection : data});
+					data = new CollectionModel({}, {collection : new ViewCollection(data)});
 				}
 
 				var recursively = function(template, data) {
@@ -339,7 +356,7 @@
 					}
 					
 					if (!(data instanceof CollectionModel) && (newData instanceof Backbone.Collection)) {
-						data = new CollectionModel({}, {collection : newData});
+						data = new CollectionModel({}, {collection : new ViewCollection(newData)});
 					} else {
 						data = newData;
 					}

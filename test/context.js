@@ -2,7 +2,7 @@ describe("Bacbone.Templates", function() {
 
 	var backbonize = Backbone.Templates.Util.backbonize;
 	
-	describe("should keep proper context while rendering", function() {
+	xdescribe("should keep proper context while rendering", function() {
 		
 		it("simple model", function() {
 			var template = $("<span>$color</span>");
