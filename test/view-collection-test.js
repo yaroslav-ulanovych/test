@@ -8,9 +8,6 @@ describe("Backbone.ViewCollection", function() {
 
 	function check(length) {
 		it("should have proper length", function() {
-			console.log("ZZZZZZZZZ");
-			console.log(vc);
-			console.log(collection);
 			expect(vc.length).toBe(length);
 		});
 

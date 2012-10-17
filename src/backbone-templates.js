@@ -59,15 +59,19 @@
 			var model = this.options.model;
 			var field = this.options.field;
 
+			function isEmpty() {
+				var value = model.get(field);
+				return _.isUndefined(value) || _.isNull(value);
+			};
 
-			this.set("empty", _.isUndefined(model.get(field)));
+			this.set("empty", isEmpty());
 
 			model.on("change:" + field, function() {
 				var newValue = model.get(field);
 				this.set({
 					value : newValue,
 					synced : _.isEqual(newValue, this.get("original")),
-					empty : _.isUndefined(newValue)
+					empty : isEmpty()
 				});
 			}, this);
 
@@ -276,11 +280,9 @@
 	attrHandlers[attrNames.hovered] = function(template, model, accessor) {
 		accessor.set(model, false);
 		template.mouseover(function() {
-			console.log("mouseover", template);
 			accessor.set(model, true);
 		});
 		template.mouseout(function(e) {
-			console.log("mouseout", template);
 			// avoid blinking with nested elements
 			if (!template.is(":hover")) {
 				accessor.set(model, false);
@@ -359,7 +361,7 @@
 					return;
 				}
 
-				log("processing " + template[0].tagName.toLowerCase());
+				//log("processing " + template[0].tagName.toLowerCase());
 
 				// real work starts
 

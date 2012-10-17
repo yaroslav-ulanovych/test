@@ -86,29 +86,45 @@ describe("FieldModel", function() {
 	});
 
 	describe("empty attribute", function() {
-		var initiallyEmptyModel = new Backbone.Model();
-		var initiallyFullModel = new Backbone.Model({a : 1});
-		var initiallyEmptyFieldModel = new FieldModel("a", initiallyEmptyModel);
-		var initiallyFullFieldModel = new FieldModel("a", initiallyFullModel);
 
 		it("should be true if there is no such attribute in the model", function() {
-			expect(initiallyEmptyFieldModel.get("empty")).toBe(true);
+			var model = new Backbone.Model();
+			var fm = new FieldModel("a", model);
+			expect(fm.get("empty")).toBe(true);
 		});
 
-		it("should become false if the attribute appeared in the model", function() {
-			initiallyEmptyModel.set({a : 1})
-			expect(initiallyEmptyFieldModel.get("empty")).toBe(false);
+		it("should be true if the attribute is null", function() {
+			var model = new Backbone.Model({a : null});
+			var fm = new FieldModel("a", model);
+			expect(fm.get("empty")).toBe(true);
 		});
 
 		it("should be false if there is such attribute in the model", function() {
-			expect(initiallyFullFieldModel.get("empty")).toBe(false);
+			var model = new Backbone.Model({a : 123});
+			var fm = new FieldModel("a", model);
+			expect(fm.get("empty")).toBe(false);
+		});
+
+		it("should become false if the attribute appeared in the model", function() {
+			var model = new Backbone.Model();
+			var fm = new FieldModel("a", model);
+			model.set("a", 123);
+			expect(fm.get("empty")).toBe(false);
 		});
 
 		it("should become true if the attribute was deleted from the model", function() {
-			initiallyFullModel.unset("a");
-			expect(initiallyFullFieldModel.get("empty")).toBe(true);
+			var model = new Backbone.Model({a : 123});
+			var fm = new FieldModel("a", model);
+			model.unset("a");
+			expect(fm.get("empty")).toBe(true);
 		});
 
+		it("should become true if the attribute was set to null", function() {
+			var model = new Backbone.Model({a : 123});
+			var fm = new FieldModel("a", model);
+			model.set("a", null);
+			expect(fm.get("empty")).toBe(true);
+		});
 
 
 		
