@@ -256,11 +256,14 @@
 		set : function(model, value) {
 			if (model instanceof ViewModel) {
 				model = model.options.model;
-			} else if (this.callable && model instanceof FieldModel) {
-				model = model.options.model;
 			}
 			if (this.callable) {
-				var method = model[this.attribute];
+				var methodName = this.attribute;
+				var method = model[methodName];
+				if (!method && model instanceof FieldModel) {
+					var model = model.options.model;
+					method = model[methodName];
+				};
 				if (!_.isFunction(method)) {
 					console.log(model, this.toString(), method);
 					throw Backbone.Templates.Exceptions.NoSuchMethod;

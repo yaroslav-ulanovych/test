@@ -231,15 +231,30 @@ describe("Backbone.Templates", function() {
 				});
 			}, undefined));
 
-			it("callable attribute from a field model should call a method from a real model", function() {
+			it("callable attribute from a field model should call a method from the field model in the proper context", function() {
 				var model = new Backbone.Model();
 				var vm = new ViewModel(model);
 				var fm = vm.get("a");
-				var method = jasmine.createSpy("method");
-				model.method = method;
+				var actualThis;
+				fm.method = function() {
+					actualThis = this;
+				};
 				var accessor = new Accessor(false, "method", true);
 				accessor.set(fm);
-				expect(method).toHaveBeenCalled();
+				expect(actualThis).toBe(fm);
+			});
+
+			it("callable attribute from a field model should call a method from a real model if there is no such method in the field model", function() {
+				var model = new Backbone.Model();
+				var vm = new ViewModel(model);
+				var fm = vm.get("a");
+				var actualThis;
+				model.method = function() {
+					actualThis = this;
+				}
+				var accessor = new Accessor(false, "method", true);
+				accessor.set(fm);
+				expect(actualThis).toBe(model);
 			});
 		});
 
