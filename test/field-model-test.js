@@ -44,6 +44,10 @@ describe("FieldModel", function() {
 			expect(fm.get("synced")).toBe(true);
 		});
 
+		it("syncing attribute should be false", function() {
+			expect(fm.get("syncing")).toBe(false);
+		});
+
 		it("original attribute should be set to field's value", function() {
 			expect(fm.get("original")).toBe(123);
 		});

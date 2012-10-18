@@ -16,8 +16,11 @@
 
 			this.set("syncing", false);
 
-			var originalFetch = model.fetch;
+			
 			var self = this;
+
+			// substituting the fetch method
+			var originalFetch = model.fetch;
 			model.fetch = function() {
 				self.set("syncing", true);
 				originalFetch.call(model, {
@@ -28,6 +31,19 @@
 						self.set("syncing", false);
 					}
 				});
+			}
+
+			// substituting the set method
+			var originalSet = model.set;
+			model.set = function(key, value) {
+				if (_.isString(key) && key.indexOf(":") != -1) {
+					var splittedKey = key.split(":");
+					var modelAttr = splittedKey[0];
+					var fieldModelAttr = splittedKey[1];
+					return self.get(modelAttr).set(fieldModelAttr, value);
+				} else {
+					return originalSet.apply(model, arguments);
+				}
 			}
 		},
 		get : function(attribute) {
@@ -51,10 +67,12 @@
 		},
 
 		initialize : function() {
-			this.set("value", this.options.model.get(this.options.field));
-			this.set("synced", true);
-
-			this.set("original", this.options.model.get(this.options.field));
+			this.set({
+				value : this.options.model.get(this.options.field),
+				synced : true,
+				syncing : false,
+				original : this.options.model.get(this.options.field)
+			});
 
 			var model = this.options.model;
 			var field = this.options.field;

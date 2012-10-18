@@ -30,6 +30,45 @@ describe("Bacbone.ViewModel", function() {
 		expect((new ViewModel(new Backbone.Model()).get("syncing"))).toBe(false);
 	});
 
+	describe("gives an ability from a model to change attributes of field models using colon notation by substituting the set method", function() {
+		describe("original set should be used when", function() {
+
+			it("several attributes are set at once", function() {
+				var model = new Backbone.Model();
+				var actualThis;
+				var setSpy = jasmine.createSpy("set").andCallFake(function() { actualThis = this; return 123; });
+				model.set = setSpy;
+				var vm = new ViewModel(model);
+				var fm = vm.get("a");
+				var obj = {a : 1}
+				expect(model.set(obj)).toBe(123);
+				expect(actualThis).toBe(model);
+				expect(setSpy).toHaveBeenCalledWith(obj)
+			});
+
+			it("there is no colon in the attribute name", function() {
+				var model = new Backbone.Model();
+				var actualThis;
+				var setSpy = jasmine.createSpy("set").andCallFake(function() { actualThis = this; return 123; });
+				model.set = setSpy;
+				var vm = new ViewModel(model);
+				var fm = vm.get("a");
+				expect(model.set("abc", true)).toBe(123);
+				expect(actualThis).toBe(model);
+				expect(setSpy).toHaveBeenCalledWith("abc", true);
+			});
+		});
+
+		it("it does", function() {
+			var model = new Backbone.Model();
+			var vm = new ViewModel(model);
+			var fm = vm.get("a");
+			model.set("a:syncing", true);
+			expect(fm.get("syncing")).toBe(true);
+		});
+		
+	});
+
 	describe("should substitute the fetch method of the original model so that", function() {
 
 		it("original fetch is still called", function() {
