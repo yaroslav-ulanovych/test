@@ -2,7 +2,7 @@ describe("Backbone.Templates", function() {
 
 	describe("click", function() {
 		it("should work", function() {
-			var template = $("<div click='click()'>");
+			var template = $("<div bt-click='click()'>");
 			var model = new Backbone.Model();
 			var click = jasmine.createSpy("click");
 			model.click = click;

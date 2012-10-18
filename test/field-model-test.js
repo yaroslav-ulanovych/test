@@ -125,9 +125,6 @@ describe("FieldModel", function() {
 			model.set("a", null);
 			expect(fm.get("empty")).toBe(true);
 		});
-
-
-		
 	});
 
 

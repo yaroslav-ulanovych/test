@@ -176,12 +176,12 @@
 		}
 	});
 
-	var attrNames = {
-		data : "data",
-		hovered : "hovered",
-		rendered : "rendered",
-		click : "click",
-		input : "input"
+	var HtmlAttrNames = {
+		Data : "bt-data",
+		Hovered : "bt-hovered",
+		Rendered : "bt-rendered",
+		Click : "bt-click",
+		Input : "bt-input"
 	};
 
 	function Accessor(negated, attribute, callable) {
@@ -256,6 +256,8 @@
 		set : function(model, value) {
 			if (model instanceof ViewModel) {
 				model = model.options.model;
+			} else if (this.callable && model instanceof FieldModel) {
+				model = model.options.model;
 			}
 			if (this.callable) {
 				var method = model[this.attribute];
@@ -277,7 +279,7 @@
 	
 	var attrHandlers = {};
 
-	attrHandlers[attrNames.hovered] = function(template, model, accessor) {
+	attrHandlers[HtmlAttrNames.Hovered] = function(template, model, accessor) {
 		accessor.set(model, false);
 		template.mouseover(function() {
 			accessor.set(model, true);
@@ -290,7 +292,7 @@
 		});
 	};
 
-	attrHandlers[attrNames.rendered] = function(template, model, accessor) {
+	attrHandlers[HtmlAttrNames.Rendered] = function(template, model, accessor) {
 		var next = template.next();
 		var parent = template.parent();
 		var prev = template.prev();
@@ -313,13 +315,13 @@
 		}
 	};
 
-	attrHandlers[attrNames.click] = function(template, model, accessor) {
+	attrHandlers[HtmlAttrNames.Click] = function(template, model, accessor) {
 		template.click(function() {
 			accessor.set(model);
 		});
 	};	
 	
-	attrHandlers[attrNames.input] = function(template, model, accessor) {
+	attrHandlers[HtmlAttrNames.Input] = function(template, model, accessor) {
 		template.on("input", function() {
 			accessor.set(model, template.val());
 		});
@@ -366,7 +368,7 @@
 				// real work starts
 
 				// change context
-				var dataAttrValue = template.attr(attrNames.data);
+				var dataAttrValue = template.attr(HtmlAttrNames.Data);
 				if (dataAttrValue) {
 					var newData = data.get(dataAttrValue);
 					

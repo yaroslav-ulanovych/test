@@ -2,7 +2,7 @@ describe("Backbone.Templates", function() {
 
 	describe("input event binding", function() {
 		it("should update the model on the input event", function() {
-			var template = $("<input data='input' type='text' input='value'>");
+			var template = $("<input bt-data='input' type='text' bt-input='value'>");
 			var model = new Backbone.Model({input : ""});
 			Backbone.Templates.bind(template, model);
 			template.val("qw");
@@ -12,7 +12,7 @@ describe("Backbone.Templates", function() {
 
 		describe("should update the value of the input element", function() {
 
-			var template = $("<input data='input' type='text' input='value'>");
+			var template = $("<input bt-data='input' type='text' bt-input='value'>");
 			var model = new Backbone.Model({input : "123"});
 			Backbone.Templates.bind(template, model);
 

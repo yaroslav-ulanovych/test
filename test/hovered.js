@@ -4,7 +4,7 @@ describe("Bacbone.Templates", function() {
 	
 	describe("hovered binding should", function() {
 		
-		var template = $("<span hovered='hovered'></span>");
+		var template = $("<span bt-hovered='hovered'></span>");
 		var model = backbonize({});
 		Backbone.Templates.bind(template, model);
 	

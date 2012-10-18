@@ -230,6 +230,17 @@ describe("Backbone.Templates", function() {
 					return false;
 				});
 			}, undefined));
+
+			it("callable attribute from a field model should call a method from a real model", function() {
+				var model = new Backbone.Model();
+				var vm = new ViewModel(model);
+				var fm = vm.get("a");
+				var method = jasmine.createSpy("method");
+				model.method = method;
+				var accessor = new Accessor(false, "method", true);
+				accessor.set(fm);
+				expect(method).toHaveBeenCalled();
+			});
 		});
 
 

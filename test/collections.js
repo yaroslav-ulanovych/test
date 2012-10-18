@@ -10,13 +10,13 @@ describe("Bacbone.Templates", function() {
 			describe("when using as a template for an item in the collection", function() {
 				
 				it("a single node", function() {
-					var template = $("<div data='collection'><span></span></div>");
+					var template = $("<div bt-data='collection'><span></span></div>");
 					Backbone.Templates.bind(template, backbonize([{}, {}, {}]));
 					expect(template.children("span").length).toBe(3);
 				});
 				
 				it("a node with a nested node", function() {
-					var template = $("<div data='collection'><span><p></p></span></div>");
+					var template = $("<div bt-data='collection'><span><p></p></span></div>");
 					Backbone.Templates.bind(template, backbonize([{}, {}, {}]));
 					expect(template.children("span").length).toBe(3);
 				});
@@ -26,7 +26,7 @@ describe("Bacbone.Templates", function() {
 		});
 		
 		it("case 1", function() {
-			var template = $("<div data='collection'><span data='name'>$value</span></div>");
+			var template = $("<div bt-data='collection'><span bt-data='name'>$value</span></div>");
 			var collection = backbonize([{name: 1}, {name: 2}, {name: 3}]);
 			Backbone.Templates.bind(template, collection);
 			expect(template.children("span:nth-child(1)").text()).toBe("1");
@@ -41,7 +41,7 @@ describe("Bacbone.Templates", function() {
 		});
 
 		it("case 2", function() {
-			var template = $("<table><tbody data='collection'><tr><td><a href='$link()'></a></td></tr></tbody></table>");
+			var template = $("<table><tbody bt-data='collection'><tr><td><a href='$link()'></a></td></tr></tbody></table>");
 			var model = new Backbone.Model();
 			model.link = function() {return "link"; };
 			var collection = new Backbone.Collection([model]);
@@ -56,7 +56,7 @@ describe("Bacbone.Templates", function() {
 				describe("added", function() {
 
 					var collection = new Backbone.Collection();
-					var template = $("<div data='collection'><span data='name'>$value</span><span data='age'>$value</span></div>");
+					var template = $("<div bt-data='collection'><span bt-data='name'>$value</span><span bt-data='age'>$value</span></div>");
 					Backbone.Templates.bind(template, collection);
 
 					it("to the empty collection", function() {
@@ -101,7 +101,7 @@ describe("Bacbone.Templates", function() {
 						age : "age3"
 					}]);
 
-					var template = $("<div data='collection'><span name='$name'></span><span age='$age'></span></div>");
+					var template = $("<div bt-data='collection'><span name='$name'></span><span age='$age'></span></div>");
 					Backbone.Templates.bind(template, collection);
 
 					it("from the end of the collection", function() {
@@ -139,7 +139,7 @@ describe("Bacbone.Templates", function() {
 			describe("when the collection is reset", function() {
 
 				var collection = new Backbone.Collection();
-				var template = $("<div data='collection'><span data='name'>$value</span><span data='age'>$value</span></div>");
+				var template = $("<div bt-data='collection'><span bt-data='name'>$value</span><span bt-data='age'>$value</span></div>");
 				Backbone.Templates.bind(template, collection);
 
 				it("to the populated state", function() {
