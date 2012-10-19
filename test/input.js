@@ -47,6 +47,25 @@ describe("Backbone.Templates", function() {
 					});
 				});
 
+				describe("an exception should be thrown if there is no option matching field's value", function() {
+					it("on the moment of binding", function() {
+						var template = $("<select bt-data='a' bt-input='value'><option>1</option><option>2</option></select>")
+						var model = new Backbone.Model({a : "3"});
+						expect(function() {
+							Backbone.Templates.bind(template, model);
+						}).toThrow();
+					});
+
+					it("and later", function() {
+						var template = $("<select bt-data='a' bt-input='value'><option>1</option><option>2</option></select>")
+						var model = new Backbone.Model({a : "1"});
+						Backbone.Templates.bind(template, model);
+						expect(function() {
+							model.set("a", "3");
+						}).toThrow();
+					});
+				});
+
 				
 			});
 		});

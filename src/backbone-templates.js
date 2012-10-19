@@ -232,7 +232,7 @@
 	Accessor.prototype = {
 		/** Subscribe to changes of model's attribute. */
 		bind : function(model, handler) {
-			model.bind(this.callable ? "change" : ("change:" + this.attribute), function() {
+			((model instanceof ViewModel) ? model.options.model : model).bind(this.callable ? "change" : ("change:" + this.attribute), function() {
 				handler(this.get(model));
 			}, this);
 			handler(this.get(model));
@@ -355,6 +355,9 @@
 		
 		accessor.bind(model, function(value) {
 			template.val(value);
+			if (template.val() != value) {
+				throw new Backbone.Templates.Exceptions.InvalidModelValue(template, model, value);
+			}
 		});
 	};
 
@@ -552,7 +555,14 @@
 			NoSuchAttribute : "no such attribute",
 			NoSuchMethod : "no such method",
 			BadAccessorSyntax : "bad accessor syntax",
-			UnsupportedOperation : "unsupported operation"
+			UnsupportedOperation : "unsupported operation",
+			InvalidModelValue : function (template, model, value) {
+				return {
+					template : template,
+					model : model,
+					value : value
+				}
+			}
 		}
 
 	}

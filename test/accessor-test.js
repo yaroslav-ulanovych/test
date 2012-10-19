@@ -271,6 +271,16 @@ describe("Backbone.Templates", function() {
 				expect(handler).toHaveBeenCalledWith(123);
 			});
 
+			it("should bind to the real model if called with a view model", function() {
+				var model = new Backbone.Model({a : 1});
+				var vm = new ViewModel(model);
+				var accessor = new Accessor(false, "a", false);
+				var handler = jasmine.createSpy("handler");
+				accessor.bind(vm, handler);
+				model.set("a", "2");
+				expect(handler.callCount).toBe(2);
+			});
+
 			it("should listen to all change events if the accessor is callable", function () {
 				var model = new Backbone.Model();
 				var accessor = new Accessor(false, "a", true);
