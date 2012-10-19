@@ -343,9 +343,16 @@
 	};	
 	
 	attrHandlers[HtmlAttrNames.Input] = function(template, model, accessor) {
-		template.on("input", function() {
-			accessor.set(model, template.val());
-		});
+		if (template.is("select")) {
+			template.on("change", function() {
+				accessor.set(model, template.val());
+			});
+		} else {
+			template.on("input", function() {
+				accessor.set(model, template.val());
+			});
+		}
+		
 		accessor.bind(model, function(value) {
 			template.val(value);
 		});
