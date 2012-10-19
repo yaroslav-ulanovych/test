@@ -8,6 +8,7 @@
 
 		initialize : function() {
 			var model = this.options.model;
+			var self = this;
 
 			_.each(model.toJSON(), function(value, key) {
 				this.set(key, new FieldModel(key, model));
@@ -16,8 +17,9 @@
 
 			this.set("syncing", false);
 
-			
-			var self = this;
+			model.on("all", function() {
+				self.trigger.apply(self, arguments);
+			});
 
 			// substituting the fetch method
 			var originalFetch = model.fetch;
@@ -232,7 +234,7 @@
 	Accessor.prototype = {
 		/** Subscribe to changes of model's attribute. */
 		bind : function(model, handler) {
-			((model instanceof ViewModel) ? model.options.model : model).bind(this.callable ? "change" : ("change:" + this.attribute), function() {
+			model.bind(this.callable ? "change" : ("change:" + this.attribute), function() {
 				handler(this.get(model));
 			}, this);
 			handler(this.get(model));

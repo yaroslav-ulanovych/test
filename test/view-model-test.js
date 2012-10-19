@@ -30,6 +30,15 @@ describe("Bacbone.ViewModel", function() {
 		expect((new ViewModel(new Backbone.Model()).get("syncing"))).toBe(false);
 	});
 
+	it("should propagate change events", function() {
+		var model = new Backbone.Model();
+		var vm = new ViewModel(model);
+		var eventListener = jasmine.createSpy("eventListener");
+		vm.on("change:a", eventListener);
+		model.set("a", 1);
+		expect(eventListener).toHaveBeenCalled();
+	});
+
 	describe("gives an ability from a model to change attributes of field models using colon notation by substituting the set method", function() {
 		describe("original set should be used when", function() {
 
