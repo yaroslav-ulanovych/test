@@ -2,6 +2,49 @@ describe("Backbone.Templates", function() {
 
 	describe("input event binding", function() {
 
+		describe("on check boxes", function() {
+
+			describe("should update the value of the input element", function() {
+				var template1 = $("<input type='checkbox' bt-data='a' bt-input='value'>");
+				var template2 = $("<input type='checkbox' bt-data='b' bt-input='value'>");
+
+				var model = new Backbone.Model({
+					a : false,
+					b : true
+				});
+
+				Backbone.Templates.bind(template1, model);
+				Backbone.Templates.bind(template2, model);
+
+				it("immediately after binding", function() {
+					expect(template1.is(":checked")).toBe(false);
+					expect(template2.is(":checked")).toBe(true);
+				});
+
+				it("when model's property changes", function() {
+					model.set({a : true, b : false});
+					expect(template1.is(":checked")).toBe(true);
+					expect(template2.is(":checked")).toBe(false);
+				});
+			});
+
+			it("should update the model on the change event>", function() {
+				var template = $("<input type='checkbox' bt-data='a' bt-input='value'>");
+				var model = new Backbone.Model({a : false});
+				Backbone.Templates.bind(template, model);
+
+				template.attr("checked", true);
+				template.trigger("change");
+				expect(model.get("a")).toBe(true);
+
+				template.attr("checked", false);
+				template.trigger("change");
+				expect(model.get("a")).toBe(false);
+			});
+
+
+		});
+
 		describe("should work with", function() {
 			describe("textfield elements", function() {
 				it("should update the model on the input event", function() {
@@ -68,6 +111,7 @@ describe("Backbone.Templates", function() {
 
 				
 			});
+
 		});
 
 		

@@ -345,7 +345,11 @@
 	};	
 	
 	attrHandlers[HtmlAttrNames.Input] = function(template, model, accessor) {
-		if (template.is("select")) {
+		if (template.is("[type='checkbox']")) {
+			template.on("change", function() {
+				accessor.set(model, template.is(":checked"));
+			});
+		} else if (template.is("select")) {
 			template.on("change", function() {
 				accessor.set(model, template.val());
 			});
@@ -356,9 +360,16 @@
 		}
 		
 		accessor.bind(model, function(value) {
-			template.val(value);
-			if (template.val() != value) {
-				throw new Backbone.Templates.Exceptions.InvalidModelValue(template, model, value);
+			if (template.is(":checkbox")) {
+				template.attr("checked", value);
+			} else if (template.is("select")) {
+				template.val(value);
+				if (template.val() != value) {
+					console.log(template, model, value);
+					throw "combobox doesn't have such option";
+				}
+			} else {
+				template.val(value);
 			}
 		});
 	};
