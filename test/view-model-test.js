@@ -89,7 +89,17 @@ describe("Bacbone.ViewModel", function() {
 			expect(originalFetch).toHaveBeenCalled;
 		});
 
-		it("view model gets syncing when fethc is called", function() {
+		it("original fetch is called with given arguments", function() {
+			var model = new Backbone.Model();
+			model.fetch = function(options) {
+				expect(options.a).toBe(1);
+				expect(options.b).toBe(2);
+			};
+			var vm = new ViewModel(model);
+			model.fetch({a : 1, b : 2});
+		});
+
+		it("view model gets syncing when fetch is called", function() {
 			var model = new Backbone.Model();
 			var vm = new ViewModel(model);
 			model.sync = function() {};

@@ -23,16 +23,16 @@
 
 			// substituting the fetch method
 			var originalFetch = model.fetch;
-			model.fetch = function() {
+			model.fetch = function(options) {
 				self.set("syncing", true);
-				originalFetch.call(model, {
+				originalFetch.call(model, _.extend({
 					success : function() {
 						self.set("syncing", false);
 					},
 					error : function() {
 						self.set("syncing", false);
 					}
-				});
+				}, options));
 			}
 
 			// substituting the set method
